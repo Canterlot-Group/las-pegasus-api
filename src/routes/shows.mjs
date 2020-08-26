@@ -45,24 +45,24 @@ export default (RouteInterface => {
             
         }
 
-        // PUT /user/:user_id/comment/:comment_id
+        // PUT /show/:show_id
         edit(req, res) {
             if (this._isRequestBodyEmpty({req, res})) return;
-            if (!this._hasRank({req, res}, 'admin', true))
+            if (!this._hasRank({req, res}, 'admin'))
                 return this._denyPermission({req, res});
 
-            this._models.Comment.update({content: req.body.content}, {where: { id: req.params.comment_id }})
-            .then(comment => res.json({ stat: 'OK', id: comment.id })
-            ).catch(err => this._handleErrors({req, res}, err));
+            delete req.body.id;
+            this._models.Show.update(req.body, {where: { id: req.params.show_id }})
+            .then(show => res.json({ stat: 'OK' }))
+            .catch(err => this._handleErrors({req, res}, err));
         }
 
-        // DELETE /user/:user_id/comment/:comment_id
+        // DELETE /show/:show_id
         delete(req, res) {
-            if (!this._hasRank({req, res}, 'admin', true))
+            if (!this._hasRank({req, res}, 'admin'))
                 return this._denyPermission({req, res});
 
-            var comment_id = req.params.comment_id;
-            this._models.Comment.destroy({where: { id: comment_id }}).then(() => {
+            this._models.Show.destroy({where: { id: req.params.show_id }}).then(() => {
                 res.json({ stat: 'OK' });
             });
         }
