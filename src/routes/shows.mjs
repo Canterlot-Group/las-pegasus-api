@@ -38,9 +38,12 @@ export default (RouteInterface => {
             if (!this._hasRank({req, res}, 'admin'))
                 return this._denyPermission({req, res});
 
+            var belongs_to = req.body.users || [];
+
             delete req.body.id;
             this._models.Show.create(req.body).then(show => {
-                res.json({ stat: 'OK', id: show.id });
+                show.setUsers(belongs_to).then(() => res.json({ stat: 'OK', id: show.id }))
+                    .catch(e => this._handleErrors({req, res}, e));
             }).catch(e => this._handleErrors({req, res}, e));
             
         }
@@ -51,10 +54,14 @@ export default (RouteInterface => {
             if (!this._hasRank({req, res}, 'admin'))
                 return this._denyPermission({req, res});
 
+            var belongs_to = req.body.users || [];
+
             delete req.body.id;
             this._models.Show.update(req.body, {where: { id: req.params.show_id }})
-            .then(show => res.json({ stat: 'OK' }))
-            .catch(err => this._handleErrors({req, res}, err));
+            .then(show => {
+                show.setUsers(belongs_to).then(() => res.json({ stat: 'OK' }))
+                    .catch(e => this._handleErrors({req, res}, e));
+            }).catch(err => this._handleErrors({req, res}, err));
         }
 
         // DELETE /show/:show_id
