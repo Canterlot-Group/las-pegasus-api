@@ -180,9 +180,11 @@ Router.post('/show/:show_id/episode', (...args) => Episode.create(...args));
 
 //// >> PUT, eg. edit
 Router.put('/show/:show_id', (...args) => Show.edit(...args));
+Router.put('/show/:show_id/episode/:ep_number', (...args) => Episode.edit(...args));
 
 //// >> DELETE, eg. remove
 Router.delete('/show/:show_id', (...args) => Show.delete(...args));
+Router.delete('/show/:show_id/episode/:ep_number', (...args) => Episode.delete(...args));
 
 
 
