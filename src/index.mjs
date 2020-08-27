@@ -49,6 +49,7 @@ const Album       = new routes.Album       (seq, models, sequelize.Op);
 const Song        = new routes.Song        (seq, models, sequelize.Op);
 const Comment     = new routes.Comment     (seq, models, sequelize.Op);
 const Show        = new routes.Show        (seq, models, sequelize.Op);
+const Episode     = new routes.Episode     (seq, models, sequelize.Op);
 
 //// >> GET, eg. list, search
 Router.get('/users',                   (...args) => User.getAll(...args));
@@ -166,11 +167,13 @@ Router.delete('/user/:user_id/comment/:comment_id', (...args) => Comment.delete(
 
 
 //// >> GET, eg. list, search
-Router.get('/show/:show_id', (...args) => Show.getOne(...args));
-Router.get('/shows',         (...args) => Show.getAll(...args));
+Router.get('/show/:show_id',          (...args) => Show.getOne(...args));
+Router.get('/shows',                  (...args) => Show.getAll(...args));
+Router.get('/show/:show_id/episodes', (...args) => Episode.getAllByShow(...args));
 
 //// >> POST, eg. create, validate
-Router.post('/show', (...args) => Show.create(...args));
+Router.post('/show',                  (...args) => Show.create(...args));
+Router.post('/show/:show_id/episode', (...args) => Episode.create(...args));
 
 //// >> PUT, eg. edit
 Router.put('/show/:show_id', (...args) => Show.edit(...args));

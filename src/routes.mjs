@@ -1,5 +1,6 @@
 'use strict';
 import util from 'util';
+import moment from 'moment';
 
 class RouteInterface {
     constructor(seq, models, ops) {
@@ -7,6 +8,7 @@ class RouteInterface {
         this._seq    = seq;
         this._models = models;
         this._ops    = ops;
+        this._moment = moment;
 
         this._RANK = {
             'anonymous': 0,
@@ -149,5 +151,8 @@ routes.Comment = Comment(RouteInterface);
 
 import Show from './routes/shows.mjs';
 routes.Show = Show(RouteInterface);
+
+import Episode from './routes/episodes.mjs';
+routes.Episode = Episode(RouteInterface);
 
 export default routes;
