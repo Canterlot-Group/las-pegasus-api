@@ -172,6 +172,13 @@ Router.get('/shows',         (...args) => Show.getAll(...args));
 //// >> POST, eg. create, validate
 Router.post('/show', (...args) => Show.create(...args));
 
+//// >> PUT, eg. edit
+Router.put('/show/:show_id', (...args) => Show.edit(...args));
+
+//// >> DELETE, eg. remove
+Router.delete('/show/:show_id', (...args) => Show.delete(...args));
+
+
 
 app.use(Router);
 app.use((req, res) => res.status(404).json({ stat: 'Err', err: 'not found' }));
