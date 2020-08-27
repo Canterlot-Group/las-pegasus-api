@@ -2,7 +2,7 @@
 
 export default (RouteInterface => {
 
-    return class Show extends RouteInterface {
+    return class Episode extends RouteInterface {
 
         // GET /episode/:episode_id
         getOne(req, res) {
