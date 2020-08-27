@@ -41,7 +41,7 @@ export default (RouteInterface => {
             delete req.body.id;
             this._models.Show.create(req.body).then(show => {
                 res.json({ stat: 'OK', id: show.id });
-            });
+            }).catch(e => this._handleErrors({req, res}, e));
             
         }
 
