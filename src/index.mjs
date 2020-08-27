@@ -170,6 +170,9 @@ Router.delete('/user/:user_id/comment/:comment_id', (...args) => Comment.delete(
 Router.get('/show/:show_id',          (...args) => Show.getOne(...args));
 Router.get('/shows',                  (...args) => Show.getAll(...args));
 Router.get('/show/:show_id/episodes', (...args) => Episode.getAllByShow(...args));
+Router.get('/show/:show_id/episode/:ep_number', (...args) => Episode.getOneByEpisodeNumber(...args));
+Router.get('/episodes',                         (...args) => Episode.getAll(...args));
+Router.get('/episode/:episode_id',              (...args) => Episode.getOne(...args));
 
 //// >> POST, eg. create, validate
 Router.post('/show',                  (...args) => Show.create(...args));
