@@ -88,7 +88,7 @@ class RouteInterface {
 
     // obj = any object containing mixed variable types
     _onlyIntegers(obj) {
-        return Object.values(obj).filter(v => { return typeof va == 'number'; });
+        return Object.values(obj).filter(va => { return typeof va == 'number'; });
     }
 
     // obj = any object containing mixed variable types
