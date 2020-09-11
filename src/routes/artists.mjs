@@ -14,6 +14,8 @@ export default (RouteInterface => {
             this._models.Artist.findByPk(artist_id, {
             }).then(async artist => {
 
+                if (!artist) return res.json({ stat: 'Err', err: 'artist does not exist' });
+
                 var is_same_user = (res.locals.user_id != null && res.locals.user_id === artist.UserId);
                 var albums = await artist.getAlbums({ limit: 4, order: this._seq.random(), attributes: ['id', 'name'] });
                 var user = null;
@@ -26,7 +28,7 @@ export default (RouteInterface => {
                 res.json({ stat: 'OK', artist: artist, user: can_view_user ? user : null,
                 random_albums: albums, same_user: is_same_user });
 
-            });
+            }).catch(err => this._handleErrors({req, res}, err));
 
         }
 
