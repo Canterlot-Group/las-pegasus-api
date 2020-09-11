@@ -10,7 +10,7 @@ export default (app, config, models) => {
 
     // -- -- -- ---- -- -- ---- -- -- --
     const rateLimiter = slowDown({
-        windowMs: 600000, delayAfter: 125, delayMs: 250
+        windowMs: 300000, delayAfter: 10, delayMs: 250
     });
 
     // -- -- -- ---- -- -- ---- -- -- --
