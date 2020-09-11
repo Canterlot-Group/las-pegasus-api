@@ -108,7 +108,7 @@ class RouteInterface {
         var limit = 10;
 
         var page = parseInt(req.query.page) || 1;
-        if (page < 0) page = 1;
+        if (page < 0 || page > Number.MAX_SAFE_INTEGER) page = 1;
 
         options.limit = limit;
         options.offset = limit * page - limit;
