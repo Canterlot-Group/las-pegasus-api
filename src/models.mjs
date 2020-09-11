@@ -37,7 +37,7 @@ export default (seq, DataTypes) => class Models {
             permissions: {
                 type: DataTypes.INTEGER.UNSIGNED,
                 defaultValue: 1,
-                validate: {len: [0, 7]}
+                validate: {min: 0, max: 7}
             },
 
             loginEnabled: { // for accounts that only require access to the API
