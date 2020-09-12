@@ -9,11 +9,26 @@ export default (RouteInterface => {
             var song_id = req.params.song_id;
             this._models.Song.findByPk(song_id, {
                 include: [
-                    { model: this._models.Artist, attributes: {exclude: ['UserId']} },
-                    this._models.Album, this._models.Stream,
-                    { model: this._models.Comment, attributes: {exclude: ['UserId', 'SongId']},
-                    include: { model: this._models.User, attributes: ['id', 'name'] }}
-                ]}).then(song => res.json({ stat: 'OK', song: song }));
+                    { model: this._models.Artist, attributes: { exclude: ['UserId'] } },
+                    //{ model: this._models.Favourite },
+                    { model: this._models.Stream },
+                    { model: this._models.Album },
+                    { model: this._models.Comment, attributes: { exclude: ['UserId', 'SongId'] },
+                        include: { model: this._models.User, attributes: ['id', 'name'] }
+                    }
+            ]}).then(async song => {
+
+                if (!song)
+                    return res.json({ stat: 'Err', err: 'song not exist' });
+
+                const user_id = res.locals.user_id;
+
+                const fav_count_all = await this._models.Favourite.count({ where: {SongId: song.id} });
+                const fav_count_per_user = user_id ? await this._models.Favourite.count({ where: {SongId: song.id, UserId: user_id} }) : 0;
+
+                res.json({ stat: 'OK', song: song, favouriteCount: fav_count_all, userLiked: !!fav_count_per_user });
+
+            }).catch(err => this._handleErrors({req, res}, err));
         }
 
         // GET /song/random (?limit=6)
