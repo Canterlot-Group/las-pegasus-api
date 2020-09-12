@@ -85,9 +85,9 @@ export default (RouteInterface => {
                             if (create_session) {
                                 this._models.Session.create({ sessionId: this._createSessionId(user.name),
                                     ipAddress: ip_address, userAgent: user_agent, UserId: user.id}).then(
-                                        session => res.json({ stat: 'OK', session: session.sessionId }));
+                                        session => res.json({ stat: 'OK', session: session.sessionId, userId: user.id }));
                             } else
-                                return res.json({ stat: 'OK' });
+                                return res.json({ stat: 'OK', userId: user.id });
 
                         } else
                             return res.json({ stat: 'Err', reason: 'password incorrect' });
