@@ -391,13 +391,13 @@ export default (seq, DataTypes) => class Models {
             },
             sort: {
                 type: DataTypes.STRING(32),
-                defaultValue: 'ordered', // 
+                defaultValue: 'ordered',
                 validate: {isIn: [['ordered', 'shuffle', 'randomByHours']]}
             },
             emissionDate: {
                 type: DataTypes.DATE
             },
-            finishDate: {
+            finishDate: { // if sort == randomByHours then not null, else allow null
                 type: DataTypes.DATE,
                 allowNull: true,
                 defaultValue: null
@@ -412,6 +412,10 @@ export default (seq, DataTypes) => class Models {
             description: {
                 type: DataTypes.TEXT,
                 defaultValue: ''
+            },
+            allowQueue: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false
             }
         });
 
