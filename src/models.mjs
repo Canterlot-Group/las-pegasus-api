@@ -365,11 +365,11 @@ export default (seq, DataTypes) => class Models {
                 allowNull: true,
                 validate: {is: /^\w+\.(jpg|jpeg|png)$/i}
             },
-            epFilename: {
+            epFilename: { // filename to the entire episode
                 type: DataTypes.STRING(255),
                 validate: {is: /^\w+\.(mp3|wav|flac|ogg|mp4|ogv)$/i}
             },
-            tracklist: {
+            tracklist: { // if null regular episode, else json with song IDs and/or filenames to custom songs
                 type: DataTypes.JSON,
                 allowNull: true
             }
@@ -387,7 +387,8 @@ export default (seq, DataTypes) => class Models {
 
         this.Playlist = seq.define('Playlist', {
             name: {
-                type: DataTypes.STRING(128)
+                type: DataTypes.STRING(128),
+                unique: true
             },
             sort: {
                 type: DataTypes.STRING(32),
@@ -395,7 +396,8 @@ export default (seq, DataTypes) => class Models {
                 validate: {isIn: [['ordered', 'shuffle', 'randomByHours']]}
             },
             emissionDate: {
-                type: DataTypes.DATE
+                type: DataTypes.DATE,
+                allowNull: false
             },
             finishDate: { // if sort == randomByHours then not null, else allow null
                 type: DataTypes.DATE,
