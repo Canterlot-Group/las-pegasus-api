@@ -50,6 +50,7 @@ const Song        = new routes.Song        (seq, models, sequelize.Op);
 const Comment     = new routes.Comment     (seq, models, sequelize.Op);
 const Show        = new routes.Show        (seq, models, sequelize.Op);
 const Episode     = new routes.Episode     (seq, models, sequelize.Op);
+const Playlist    = new routes.Playlist    (seq, models, sequelize.Op);
 
 //// >> GET, eg. list, search
 Router.get('/users',                   (...args) => User.getAll(...args));
@@ -179,12 +180,20 @@ Router.post('/show',                  (...args) => Show.create(...args));
 Router.post('/show/:show_id/episode', (...args) => Episode.create(...args));
 
 //// >> PUT, eg. edit
-Router.put('/show/:show_id', (...args) => Show.edit(...args));
+Router.put('/show/:show_id',                    (...args) => Show.edit(...args));
 Router.put('/show/:show_id/episode/:ep_number', (...args) => Episode.edit(...args));
 
 //// >> DELETE, eg. remove
-Router.delete('/show/:show_id', (...args) => Show.delete(...args));
+Router.delete('/show/:show_id',                    (...args) => Show.delete(...args));
 Router.delete('/show/:show_id/episode/:ep_number', (...args) => Episode.delete(...args));
+
+
+//// >> GET, eg. list, search
+Router.get('/playlist/:playlist_id', (...args) => Playlist.getOne(...args));
+Router.get('/playlists',             (...args) => Playlist.getAll(...args));
+
+//// >> POST, eg. create, validate
+Router.post('/playlist', (...args) => Playlist.create(...args));
 
 
 

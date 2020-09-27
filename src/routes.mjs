@@ -158,4 +158,7 @@ routes.Show = Show(RouteInterface);
 import Episode from './routes/episodes.mjs';
 routes.Episode = Episode(RouteInterface);
 
+import Playlist from './routes/playlists.mjs';
+routes.Playlist = Playlist(RouteInterface);
+
 export default routes;
