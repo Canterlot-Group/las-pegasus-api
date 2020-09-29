@@ -439,7 +439,7 @@ export default (seq, DataTypes) => class Models {
             }
         });
 
-        this.Bumper.belongsTo(this.Stream);
+        this.Bumper.belongsTo(this.Stream, {constraints: true});
         this.Stream.hasMany(this.Bumper);
 
         // --- -- --- -- --- -- --- -- ---
@@ -497,9 +497,6 @@ export default (seq, DataTypes) => class Models {
 
         this.HistoryEntry.belongsTo(this.Episode);
         this.Episode.hasMany(this.HistoryEntry);
-
-        this.HistoryEntry.belongsTo(this.Bumper);
-        this.Bumper.hasMany(this.HistoryEntry);
 
     }
     
