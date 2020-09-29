@@ -195,6 +195,12 @@ Router.get('/playlists',             (...args) => Playlist.getAll(...args));
 //// >> POST, eg. create, validate
 Router.post('/playlist', (...args) => Playlist.create(...args));
 
+//// >> PUT, eg. edit
+Router.put('/playlist/:playlist_id', (...args) => Playlist.edit(...args));
+
+//// >> DELETE, eg. remove
+Router.delete('/playlist/:playlist_id', (...args) => Playlist.delete(...args));
+
 
 
 app.use(Router);
