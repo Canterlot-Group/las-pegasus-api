@@ -267,23 +267,6 @@ export default (seq, DataTypes) => class Models {
         this.User.hasMany(this.Favourite);
         this.Song.hasMany(this.Favourite);
 
-        // --- -- --- -- --- -- --- -- ---
-        // PLAYBACK HISTORY
-        // --- -- --- -- --- -- --- -- ---
-        this.HistoryEntry = seq.define('HistoryEntry', {
-            listeners: {
-                type: DataTypes.INTEGER.UNSIGNED,
-                defaultValue: 0
-            },
-            skipped: {
-                type: DataTypes.STRING,
-                allowNull: true,
-                defaultValue: null
-            }
-        });
-
-        this.HistoryEntry.belongsTo(this.Song);
-        this.Song.hasMany(this.HistoryEntry);
 
         // --- -- --- -- --- -- --- -- ---
         // COMMENTS
@@ -472,6 +455,52 @@ export default (seq, DataTypes) => class Models {
         this.ChatLog.belongsTo(this.User);
         this.User.hasMany(this.ChatLog);
 
-    }
 
+        // --- -- --- -- --- -- --- -- ---
+        // PLAYBACK HISTORY
+        // --- -- --- -- --- -- --- -- ---
+        this.HistoryEntry = seq.define('HistoryEntry', {
+            timestamp: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: seq.NOW
+            },
+            listeners: {
+                type: DataTypes.INTEGER.UNSIGNED,
+                defaultValue: 0
+            },
+            skipped: {
+                type: DataTypes.STRING,
+                allowNull: true,
+                defaultValue: null
+            },
+            entryType: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                validate: { isIn: [['song', 'episode', 'bumper']] }
+            }
+        });
+
+        this.HistoryEntry.belongsTo(this.Stream);
+        this.Stream.hasMany(this.HistoryEntry);
+
+        // Random song: only Song, else NULL
+        // Song from Playlist: Song and Playlist, else NULL
+        // Episode from Show: Episode, else NULL
+        // Bumper: Bumper else NULL
+
+        this.HistoryEntry.belongsTo(this.Song);
+        this.Song.hasMany(this.HistoryEntry);
+
+        this.HistoryEntry.belongsTo(this.Playlist);
+        this.Playlist.hasMany(this.HistoryEntry);
+
+        this.HistoryEntry.belongsTo(this.Episode);
+        this.Episode.hasMany(this.HistoryEntry);
+
+        this.HistoryEntry.belongsTo(this.Bumper);
+        this.Bumper.hasMany(this.HistoryEntry);
+
+    }
+    
 }
