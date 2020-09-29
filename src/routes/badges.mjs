@@ -13,6 +13,10 @@ export default (RouteInterface => {
 
         // GET /badges
         getAll(req, res) {
+            if (this._isRequestBodyEmpty({req, res})) return;
+            if (!this._hasRank({req, res}, 'member'))
+                return this._denyPermission({req, res});
+                
             return this._models.Badge.findAndCountAll(this._paginate(req))
                 .then(badges => res.json({ stat: 'OK', badges: badges }));
         }
