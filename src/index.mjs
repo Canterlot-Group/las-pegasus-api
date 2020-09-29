@@ -51,8 +51,16 @@ const Comment     = new routes.Comment     (seq, models, sequelize.Op);
 const Show        = new routes.Show        (seq, models, sequelize.Op);
 const Episode     = new routes.Episode     (seq, models, sequelize.Op);
 const Playlist    = new routes.Playlist    (seq, models, sequelize.Op);
+const Bumper      = new routes.Bumper      (seq, models, sequelize.Op);
 
-//// >> GET, eg. list, search
+//// >> GET,    eg. list, search
+//// >> POST,   eg. create, validate
+//// >> PUT,    eg. edit
+//// >> DELETE, eg. remove
+
+
+// Users
+
 Router.get('/users',                   (...args) => User.getAll(...args));
 Router.get('/user/:user_id',           (...args) => User.getOne(...args));
 Router.get('/user/find/:search_query', (...args) => User.find(...args));
@@ -64,7 +72,6 @@ Router.get('/user/:user_id/favorites',           (...args) => Favourite.getAllBy
 Router.get('/user/:user_id/achievements',                (...args) => Achievement.getAll(...args));
 Router.get('/user/:user_id/achievement/:achievement_id', (...args) => Achievement.getOne(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/user',              (...args) => User.create(...args));
 Router.post('/user/validate',     (...args) => User.validate(...args));
 Router.post('/user/:user_id/key', (...args) => Key.create(...args));
@@ -73,10 +80,8 @@ Router.post('/user/:user_id/favourite/:song_id',           (...args) => Favourit
 Router.post('/user/:user_id/favorite/:song_id',            (...args) => Favourite.create(...args));
 Router.post('/user/:user_id/achievement',                  (...args) => Achievement.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/user/:user_id', (...args) => User.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/user/:user_id/session/:session_id', (...args) => Session.delete(...args));
 Router.delete('/user/:user_id/key/:key',            (...args) => Key.delete(...args));
 Router.delete('/user/:user_id',                     (...args) => User.delete(...args));
@@ -84,90 +89,74 @@ Router.delete('/user/:user_id/favourite/:song_id',  (...args) => Favourite.delet
 Router.delete('/user/:user_id/favorite/:song_id',   (...args) => Favourite.delete(...args));
 Router.delete('/user/:user_id/achievement/:achievement_id', (...args) => Achievement.delete(...args));
 
+// Badges
 
-//// >> GET, eg. list, search
 Router.get('/badges',          (...args) => Badge.getAll(...args));
 Router.get('/badge/:badge_id', (...args) => Badge.getOne(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/badge',          (...args) => Badge.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/badge/:badge_id', (...args) => Badge.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/badge/:badge_id', (...args) => Badge.delete(...args));
 
+// Artists
 
-//// >> GET, eg. list, search
 Router.get('/artists',           (...args) => Artist.getAll(...args));
 Router.get('/artist/:artist_id', (...args) => Artist.getOne(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/artist', (...args) => Artist.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/artist/:artist_id', (...args) => Artist.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/artist/:artist_id', (...args) => Artist.delete(...args));
 
+// Streams
 
-//// >> GET, eg. list, search
 Router.get('/streams',                 (...args) => Stream.getAll(...args));
 Router.get('/stream/:stream_id',       (...args) => Stream.getOne(...args));
 Router.get('/stream/:stream_id/songs', (...args) => Stream.getSongs(...args));
 Router.get('/stream/:stream_id/shows', (...args) => Show.getAllByStream(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/stream', (...args) => Stream.create(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/stream/:stream_id', (...args) => Stream.delete(...args));
 
+// Songs
 
-//// >> GET, eg. list, search
 Router.get('/songs',                    (...args) => Song.getAll(...args));
 Router.get('/song/random',              (...args) => Song.getRandom(...args));
 Router.get('/song/:song_id',            (...args) => Song.getOne(...args));
 Router.get('/song/:song_id/favourites', (...args) => Favourite.countBySong(...args));
 Router.get('/song/:song_id/favorites',  (...args) => Favourite.countBySong(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/song', (...args) => Song.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/song/:song_id', (...args) => Song.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/song/:song_id', (...args) => Song.delete(...args));
 
+// Albums
 
-//// >> GET, eg. list, search
 Router.get('/albums',          (...args) => Album.getAll(...args));
 Router.get('/album/:album_id', (...args) => Album.getOne(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/album', (...args) => Album.create(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/album/:album_id', (...args) => Album.delete(...args));
 
+// Comments
 
-//// >> GET, eg. list, search
 Router.get('/comment/:comment_id', (...args) => Comment.findOne(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/user/:user_id/comment/:song_id', (...args) => Comment.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/user/:user_id/comment/:comment_id', (...args) => Comment.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/user/:user_id/comment/:comment_id', (...args) => Comment.delete(...args));
 
+// Shows
 
-//// >> GET, eg. list, search
 Router.get('/show/:show_id',          (...args) => Show.getOne(...args));
 Router.get('/shows',                  (...args) => Show.getAll(...args));
 Router.get('/show/:show_id/episodes', (...args) => Episode.getAllByShow(...args));
@@ -175,32 +164,34 @@ Router.get('/show/:show_id/episode/:ep_number', (...args) => Episode.getOneByEpi
 Router.get('/episodes',                         (...args) => Episode.getAll(...args));
 Router.get('/episode/:episode_id',              (...args) => Episode.getOne(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/show',                  (...args) => Show.create(...args));
 Router.post('/show/:show_id/episode', (...args) => Episode.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/show/:show_id',                    (...args) => Show.edit(...args));
 Router.put('/show/:show_id/episode/:ep_number', (...args) => Episode.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/show/:show_id',                    (...args) => Show.delete(...args));
 Router.delete('/show/:show_id/episode/:ep_number', (...args) => Episode.delete(...args));
 
+// Playlists
 
-//// >> GET, eg. list, search
 Router.get('/playlist/:playlist_id', (...args) => Playlist.getOne(...args));
 Router.get('/playlists',             (...args) => Playlist.getAll(...args));
 
-//// >> POST, eg. create, validate
 Router.post('/playlist', (...args) => Playlist.create(...args));
 
-//// >> PUT, eg. edit
 Router.put('/playlist/:playlist_id', (...args) => Playlist.edit(...args));
 
-//// >> DELETE, eg. remove
 Router.delete('/playlist/:playlist_id', (...args) => Playlist.delete(...args));
 
+// Bumpers
+
+Router.get('/bumper/:bumper_id', (...args) => Bumper.getOne(...args));
+Router.get('/bumpers',           (...args) => Bumper.getAll(...args));
+
+Router.post('/bumper', (...args) => Bumper.create(...args));
+
+Router.delete('/bumper/:bumper_id', (...args) => Bumper.delete(...args));
 
 
 app.use(Router);
