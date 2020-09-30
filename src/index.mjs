@@ -52,6 +52,7 @@ const Show        = new routes.Show        (seq, models, sequelize.Op);
 const Episode     = new routes.Episode     (seq, models, sequelize.Op);
 const Playlist    = new routes.Playlist    (seq, models, sequelize.Op);
 const Bumper      = new routes.Bumper      (seq, models, sequelize.Op);
+const History     = new routes.History     (seq, models, sequelize.Op);
 
 //// >> GET,    eg. list, search
 //// >> POST,   eg. create, validate
@@ -117,6 +118,8 @@ Router.get('/streams',                 (...args) => Stream.getAll(...args));
 Router.get('/stream/:stream_id',       (...args) => Stream.getOne(...args));
 Router.get('/stream/:stream_id/songs', (...args) => Stream.getSongs(...args));
 Router.get('/stream/:stream_id/shows', (...args) => Show.getAllByStream(...args));
+Router.get('/stream/:stream_id/history',       (...args) => History.getAll(...args));
+Router.get('/stream/:stream_id/history/:date', (...args) => History.getAllByDate(...args));
 
 Router.post('/stream', (...args) => Stream.create(...args));
 
@@ -124,11 +127,11 @@ Router.delete('/stream/:stream_id', (...args) => Stream.delete(...args));
 
 // Songs
 
-Router.get('/songs',                    (...args) => Song.getAll(...args));
-Router.get('/song/random',              (...args) => Song.getRandom(...args));
-Router.get('/song/:song_id',            (...args) => Song.getOne(...args));
-Router.get('/song/:song_id/favourites', (...args) => Favourite.countBySong(...args));
-Router.get('/song/:song_id/favorites',  (...args) => Favourite.countBySong(...args));
+Router.get('/songs',                      (...args) => Song.getAll(...args));
+Router.get('/song/random',                (...args) => Song.getRandom(...args));
+Router.get('/song/:song_id',              (...args) => Song.getOne(...args));
+Router.get('/song/:song_id/favourites',   (...args) => Favourite.countBySong(...args));
+Router.get('/song/:song_id/favorites',    (...args) => Favourite.countBySong(...args));
 
 Router.post('/song', (...args) => Song.create(...args));
 

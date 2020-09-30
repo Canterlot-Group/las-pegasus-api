@@ -164,4 +164,7 @@ routes.Playlist = Playlist(RouteInterface);
 import Bumper from './routes/bumpers.mjs';
 routes.Bumper = Bumper(RouteInterface);
 
+import History from './routes/history.mjs';
+routes.History = History(RouteInterface);
+
 export default routes;
