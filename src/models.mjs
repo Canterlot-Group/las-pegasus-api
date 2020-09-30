@@ -422,20 +422,19 @@ export default (seq, DataTypes) => class Models {
             },
             repeatEvery: { // days
                 type: DataTypes.INTEGER,
-                allowNull: true
             },
-            timeframe: {
-                type: DataTypes.STRING,
-                allowNull: true,
-                validate: {is: /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]\-(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/i}
-            },
+            timeframeStart: { type: DataTypes.TIME },
+            timeframeEnd: { type: DataTypes.TIME },
+            emissionDate: { type: DataTypes.DATE },
+            finishDate: { type: DataTypes.DATE },
             audioFile: {
                 type: DataTypes.STRING(255),
                 validate: {is: /^[a-zA-Z0-9]+\:\:[a-zA-Z0-9]{32}$/i}
             },
             rarity: {
                 type: DataTypes.FLOAT(4, 3),
-                defaultValue: 0.1
+                defaultValue: 0.1,
+                allowNull: false
             }
         });
 

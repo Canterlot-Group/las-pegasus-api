@@ -23,26 +23,21 @@ export default (RouteInterface => {
             ]})).then(playlists => res.json({ stat: 'OK', playlists: playlists }));
         }
 
-        // GET /playlist/by_date/:date
-        getAllBetweenDates(req, res) {
-            var d = req.params.date;
-            this._models.Playlist.findAndCountAll(this._paginate(req,
-                {
+        // GET /playlists/by_date/:date
+        getAllByDate(req, res) {
+            var date_to_seek = req.params.date;
+            this._models.Playlist.findAndCountAll({
                     where: {
-                        [Op.or]: [ // 'd' should be between start date and end date
-                            {emissionDate: {
-                                [Op.lte]: d 
-                            }},
-                            {finishDate: {
-                                [Op.gte]: d
-                            }}
-                        ]
+                        [this._ops.and]: {
+                            emissionDate: { [this._ops.lt]: date_to_seek },
+                            finishDate:   { [this._ops.gt]: date_to_seek }
+                        }
                     },
-                    order: ['emissionDate', 'ASC'],
                     include: [
                         {model: this._models.Stream},
                         {model: this._models.User, attributes: ['id', 'name']}
-            ]})).then(playlists => res.json({ stat: 'OK', playlists: playlists }));
+                    ]
+                }).then(playlists => res.json({ stat: 'OK', playlists: playlists }));
         }
 
         // POST /playlist

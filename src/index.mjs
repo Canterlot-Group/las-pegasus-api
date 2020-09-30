@@ -175,8 +175,9 @@ Router.delete('/show/:show_id/episode/:ep_number', (...args) => Episode.delete(.
 
 // Playlists
 
-Router.get('/playlist/:playlist_id', (...args) => Playlist.getOne(...args));
-Router.get('/playlists',             (...args) => Playlist.getAll(...args));
+Router.get('/playlist/:playlist_id',   (...args) => Playlist.getOne(...args));
+Router.get('/playlists',               (...args) => Playlist.getAll(...args));
+Router.get('/playlists/by_date/:date', (...args) => Playlist.getAllByDate(...args));
 
 Router.post('/playlist', (...args) => Playlist.create(...args));
 
@@ -186,6 +187,7 @@ Router.delete('/playlist/:playlist_id', (...args) => Playlist.delete(...args));
 
 // Bumpers
 
+Router.get('/bumper/relevant',   (...args) => Bumper.getRelevant(...args));
 Router.get('/bumper/:bumper_id', (...args) => Bumper.getOne(...args));
 Router.get('/bumpers',           (...args) => Bumper.getAll(...args));
 
