@@ -4,9 +4,25 @@ export default (RouteInterface => {
 
     return class Bumper extends RouteInterface {
 
+        // GET /bumper/relevant
+        getRelevant(req, res) {
+            if (!this._hasRank({req, res}, 'member'))
+                return this._denyPermission({req, res});
+
+            this._models.Bumper.findAll({
+                where: this._seq.literal(`(
+                    ((emissionDate < NOW() AND finishDate > NOW() )
+                        AND ((timeframeStart IS NULL)
+                            OR ((TIME(NOW()) < timeframeEnd AND timeframeStart > timeframeEnd) OR (TIME(NOW()) > timeframeStart AND TIME(NOW()) < timeframeEnd))))
+                    OR ((emissionDate IS NULL)
+                        AND ((timeframeStart IS NULL)
+                            OR ((TIME(NOW()) < timeframeEnd AND timeframeStart > timeframeEnd) OR (TIME(NOW()) > timeframeStart AND TIME(NOW()) < timeframeEnd))))
+                )`)
+            }).then(bumper => res.json({ stat: 'OK', bumper: bumper }));
+        }
+
         // GET /bumper/:bumper_id
         getOne(req, res) {
-            if (this._isRequestBodyEmpty({req, res})) return;
             if (!this._hasRank({req, res}, 'member'))
                 return this._denyPermission({req, res});
 
@@ -18,7 +34,6 @@ export default (RouteInterface => {
 
         // GET /bumpers
         getAll(req, res) {
-            if (this._isRequestBodyEmpty({req, res})) return;
             if (!this._hasRank({req, res}, 'member'))
                 return this._denyPermission({req, res});
                 
