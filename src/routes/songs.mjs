@@ -1,8 +1,12 @@
 'use strict';
-
 export default (RouteInterface => {
 
     return class Song extends RouteInterface {
+
+        constructor(seq, models, ops, storage) {
+            super(seq, models, ops);
+            this._stor = storage;
+        }
 
         // GET /song/:song_id
         getOne(req, res) {
@@ -10,7 +14,6 @@ export default (RouteInterface => {
             this._models.Song.findByPk(song_id, {
                 include: [
                     { model: this._models.Artist, attributes: { exclude: ['UserId'] } },
-                    //{ model: this._models.Favourite },
                     { model: this._models.Stream },
                     { model: this._models.Album },
                     { model: this._models.Comment, attributes: { exclude: ['UserId', 'SongId'] },
@@ -69,17 +72,24 @@ export default (RouteInterface => {
                 return this._denyPermission({req, res});
 
             req.body.id = null;
+
             this._models.Song.create(req.body).then(song => {
             
                 song.setArtists(req.body.artists || []).then(() => {
                     song.setStreams(req.body.streams || []).then(() => {
 
-                        res.json({ stat: 'OK', song_id: song.id });
+                        var save_result = this._stor.save(`${song.id}`, 'songs', req.body.songEncoded);
 
-                    }).catch(err => this._handleErrors({req, res}, err));
-                }).catch(err => this._handleErrors({req, res}, err));
+                        if (save_result != 'ok') {
+                            song.destroy();
+                            res.json({ stat: 'err', error: 'cannot save file', save_result: save_result });
+                        } else
+                            res.json({ stat: 'OK', song_id: song.id, save_result: save_result });
 
-            }).catch(err => this._handleErrors({req, res}, err));
+                    })//.catch(err => this._handleErrors({req, res}, err));
+                })//.catch(err => this._handleErrors({req, res}, err));
+
+            })//.catch(err => this._handleErrors({req, res}, err));
         }
 
         // PUT /song/:song_id

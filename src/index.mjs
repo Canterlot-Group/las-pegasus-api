@@ -9,18 +9,20 @@ import modelConstructor from './models.mjs';
 import Icecast   from './icecast.mjs';
 import Scheduler from './scheduler.mjs';
 import Socket    from './socket.mjs';
+import Storage   from './storage.mjs';
 
 import middleware from './middleware.mjs';
 
 import 'colors';
 'use strict';
 
+const storage = new Storage(config.file_storage_path);
+
 const seq = new sequelize(config.db.database, config.db.user, config.db.password, {
     host: config.db.address, port: config.db.port, dialect: 'mysql',
     pool: {max: 5, min: 0, acquire: 30000, idle: 10000},
     logging: config.sequelize_verbose ? (msg) => console.log(msg.grey) : false
 });
-
 
 const app = express();
 const server = http.createServer(app);
@@ -46,12 +48,12 @@ const Favourite   = new routes.Favourite   (seq, models, sequelize.Op);
 const Artist      = new routes.Artist      (seq, models, sequelize.Op);
 const Stream      = new routes.Stream      (seq, models, sequelize.Op);
 const Album       = new routes.Album       (seq, models, sequelize.Op);
-const Song        = new routes.Song        (seq, models, sequelize.Op);
+const Song        = new routes.Song        (seq, models, sequelize.Op, storage);
 const Comment     = new routes.Comment     (seq, models, sequelize.Op);
 const Show        = new routes.Show        (seq, models, sequelize.Op);
-const Episode     = new routes.Episode     (seq, models, sequelize.Op);
+const Episode     = new routes.Episode     (seq, models, sequelize.Op);// storage);
 const Playlist    = new routes.Playlist    (seq, models, sequelize.Op);
-const Bumper      = new routes.Bumper      (seq, models, sequelize.Op);
+const Bumper      = new routes.Bumper      (seq, models, sequelize.Op);// storage);
 const History     = new routes.History     (seq, models, sequelize.Op);
 
 //// >> GET,    eg. list, search

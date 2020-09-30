@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import isBase64 from 'is-base64';
 'use strict';
 
 export default class Storage {
@@ -15,10 +14,12 @@ export default class Storage {
      *        - 0aed4f4b-9366-4229-a09f-0ed7b5a8b5c4.png
      *     - bumpers/
      *        - b4099069-f116-4113-b1aa-ec2a537cb627.mp3
-     *     - shows/
+     *     - episodes/
      *        - 564ea310-7fe0-4c17-8d80-f23ca28cc693.mp3
      *        - 7f156179-8ec9-4a85-b0ed-b79f21966cca.mp3
      */
+
+    valid_types = ['songs', 'arts', 'bumpers', 'episodes'];
 
     constructor(storage_path) {
         if (!storage_path.endsWith(path.sep))
@@ -30,33 +31,40 @@ export default class Storage {
             console.error(`WARNING: "${storage_path}" has no read and/or write access!`.bold.red);
         }
 
+        for (var i = 0; i < this.valid_types.length; i++)
+            if (!fs.existsSync(storage_path + this.valid_types[i]))
+                fs.mkdirSync(storage_path + this.valid_types[i]);
+
         this.path = storage_path;
     }
 
-    save(filename, file_base64) {
+    save(filename, type, file_base64) {
 
-        if (fs.existsSync(this.path + filename)) {
-            console.error(`WARNING: Tried to overwrite "${this.path + filename}. Returning error.`.bold.red);
+        if (!this.valid_types.includes(type))
+            return 'type not exist';
+
+        var full_path = (this.path + type + path.sep + filename);
+
+        if (fs.existsSync(full_path)) {
+            console.error(`WARNING: Tried to overwrite "${full_path}. Returning error.`.bold.red);
             return 'fatal';
         }
 
-        if (!isBase64(file_base64))
-            return 'not-b64';
-
         var bfrobj = Buffer.from(file_base64, 'base64');
 
-        fs.writeFileSync(this.path + filename, bfrobj);
+        fs.writeFileSync(full_path, bfrobj);
         bfrobj = null;
 
         return 'ok';
 
     }
 
-    get(filename) {
+    getRaw(filename, type) {
+        return fs.readFileSync(this.path + type + path.sep + filename);
+    }
 
-        var bfrobj = fs.readFileSync(this.path + filename);
-        return Buffer.from(bfrobj).toString('base64');
-
+    get(filename, type) {
+        return Buffer.from(this.getRaw(filename, type)).toString('base64');
     }
 
 }

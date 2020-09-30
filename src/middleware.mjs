@@ -15,7 +15,7 @@ export default (app, config, models) => {
 
     // -- -- -- ---- -- -- ---- -- -- --
     const bodyJson = bodyParser.json({
-        limit: '4mb', verify: (req, res, buf, encoding) => {
+        limit: '30mb', verify: (req, res, buf, encoding) => {
             req.rawBody = buf.toString();
         }
     });

@@ -5,16 +5,17 @@ const config = {
     sequelize_verbose: true,
     morgan_log_level: 'combined', // https://github.com/expressjs/morgan
     db: {
-        address: '172.17.0.2',
+        address: '127.0.0.1',
         port: 3306,
-        user: 'user',
+        user: 'root',
         password: '1234',
-        database: 'peganode'
+        database: 'laspegasus'
     },
     authorization_enabled: true, // ENABLE ON PRODUCTION!
     fallback_apikey: 'LLLLLLQLLLLQLLLLLQLLLLLLLLQLLLL', // Keep empty to disable.
     max_apikeys: 5,
-    icecast_url: 'https://vinyl.laspegas.us:8080'
+    icecast_url: 'https://vinyl.laspegas.us:8080',
+    file_storage_path: 'C:\\LPTest\\',
 
 }
 
