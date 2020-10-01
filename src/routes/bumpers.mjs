@@ -4,6 +4,11 @@ export default (RouteInterface => {
 
     return class Bumper extends RouteInterface {
 
+        constructor(seq, models, ops, storage) {
+            super(seq, models, ops);
+            this._stor = storage;
+        }
+
         // GET /bumper/relevant
         getRelevant(req, res) {
             if (!this._hasRank({req, res}, 'member'))

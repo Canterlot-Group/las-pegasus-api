@@ -51,9 +51,9 @@ const Album       = new routes.Album       (seq, models, sequelize.Op);
 const Song        = new routes.Song        (seq, models, sequelize.Op, storage);
 const Comment     = new routes.Comment     (seq, models, sequelize.Op);
 const Show        = new routes.Show        (seq, models, sequelize.Op);
-const Episode     = new routes.Episode     (seq, models, sequelize.Op);// storage);
+const Episode     = new routes.Episode     (seq, models, sequelize.Op, storage);
 const Playlist    = new routes.Playlist    (seq, models, sequelize.Op);
-const Bumper      = new routes.Bumper      (seq, models, sequelize.Op);// storage);
+const Bumper      = new routes.Bumper      (seq, models, sequelize.Op, storage);
 const History     = new routes.History     (seq, models, sequelize.Op);
 
 //// >> GET,    eg. list, search

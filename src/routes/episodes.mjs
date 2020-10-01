@@ -4,6 +4,11 @@ export default (RouteInterface => {
 
     return class Episode extends RouteInterface {
 
+        constructor(seq, models, ops, storage) {
+            super(seq, models, ops);
+            this._stor = storage;
+        }
+
         // GET /episode/:episode_id
         getOne(req, res) {
             this._models.Episode.findByPk(
