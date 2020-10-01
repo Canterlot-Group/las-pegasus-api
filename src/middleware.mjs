@@ -70,7 +70,7 @@ export default (app, config, models) => {
 
     app.use( (req, res, next) => {bodyJson(req, res, (err) => {
         if (err)
-            return res.status(400).json({ stat: 'Err', error: 'invalid json' });
+            return res.status(400).json({ stat: 'Err', error: 'invalid json or body too large' });
         next();
     })} );
 
