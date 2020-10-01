@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import fileType from 'file-type';
 'use strict';
 
 export default class Storage {
@@ -19,7 +20,11 @@ export default class Storage {
      *        - 7f156179-8ec9-4a85-b0ed-b79f21966cca.mp3
      */
 
-    valid_types = ['songs', 'arts', 'bumpers', 'episodes'];
+    valid_types = {songs: ['mp3', 'flac', 'ogg', 'opus'],
+        arts:             ['jpg', 'jpeg', 'png', 'gif'],
+        bumpers:          ['mp3', 'flac', 'ogg', 'opus'],
+        episodes:         ['mp4', 'mp3', 'flac', 'ogg', 'opus']
+    };
 
     constructor(storage_path) {
         if (!storage_path.endsWith(path.sep))
@@ -38,9 +43,9 @@ export default class Storage {
         this.path = storage_path;
     }
 
-    save(filename, type, file_base64) {
+    async save(filename, type, file_base64) {
 
-        if (!this.valid_types.includes(type))
+        if (!Object.keys(this.valid_types).includes(type))
             return 'type not exist';
 
         var full_path = (this.path + type + path.sep + filename);
@@ -51,6 +56,12 @@ export default class Storage {
         }
 
         var bfrobj = Buffer.from(file_base64, 'base64');
+        var bfrobj_type = await fileType.fromBuffer(bfrobj);
+
+        if ( !this.valid_types[type].includes(bfrobj_type.ext) ) {
+            bfrobj = null;
+            return 'wrong file';
+        }
 
         fs.writeFileSync(full_path, bfrobj);
         bfrobj = null;

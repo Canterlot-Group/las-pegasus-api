@@ -78,18 +78,21 @@ export default (RouteInterface => {
                 song.setArtists(req.body.artists || []).then(() => {
                     song.setStreams(req.body.streams || []).then(() => {
 
-                        var save_result = this._stor.save(`${song.id}`, 'songs', req.body.songEncoded);
+                        this._stor.save(`${song.id}`, 'songs', req.body.songEncoded).then(save_result => {
 
-                        if (save_result != 'ok') {
-                            song.destroy();
-                            res.json({ stat: 'err', error: 'cannot save file', save_result: save_result });
-                        } else
-                            res.json({ stat: 'OK', song_id: song.id, save_result: save_result });
+                            if (save_result != 'ok') {
+                                song.destroy();
+                                console.error(`Error while saving file: ${save_result}`);
+                                res.json({ stat: 'err', error: save_result });
+                            } else
+                                res.json({ stat: 'OK', song_id: song.id });
 
-                    })//.catch(err => this._handleErrors({req, res}, err));
-                })//.catch(err => this._handleErrors({req, res}, err));
+                        });
 
-            })//.catch(err => this._handleErrors({req, res}, err));
+                    }).catch(err => this._handleErrors({req, res}, err));
+                }).catch(err => this._handleErrors({req, res}, err));
+
+            }).catch(err => this._handleErrors({req, res}, err));
         }
 
         // PUT /song/:song_id
