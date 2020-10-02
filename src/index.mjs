@@ -56,6 +56,14 @@ const Playlist    = new routes.Playlist    (seq, models, sequelize.Op);
 const Bumper      = new routes.Bumper      (seq, models, sequelize.Op, storage);
 const History     = new routes.History     (seq, models, sequelize.Op);
 
+const streamScheduler = {};
+
+models.Stream.findAll({ attributes: ['id'] }).then(streams => {
+    streams.forEach(st => {
+        streamScheduler[st] = new Scheduler(models, st.id, config.file_storage_path);
+    });
+})
+
 //// >> GET,    eg. list, search
 //// >> POST,   eg. create, validate
 //// >> PUT,    eg. edit
@@ -192,7 +200,7 @@ Router.delete('/playlist/:playlist_id', (...args) => Playlist.delete(...args));
 
 // Bumpers
 
-Router.get('/bumper/relevant',   (...args) => Bumper.getRelevant(...args));
+//Router.get('/bumper/relevant',   (...args) => Bumper.getRelevant(...args));
 Router.get('/bumper/:bumper_id', (...args) => Bumper.getOne(...args));
 Router.get('/bumpers',           (...args) => Bumper.getAll(...args));
 

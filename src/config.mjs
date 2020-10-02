@@ -2,7 +2,7 @@ const config = {
 
     cors_origin: '*',
     http_port: 8000,
-    sequelize_verbose: true,
+    sequelize_verbose: false,
     morgan_log_level: 'combined', // https://github.com/expressjs/morgan
     db: {
         address: '127.0.0.1',

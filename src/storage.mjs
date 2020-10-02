@@ -60,7 +60,7 @@ export default class Storage {
         }
 
         var bfrobj = Buffer.from(file_base64, 'base64');
-        var bfrobj_type = await fileType.fromBuffer(bfrobj);
+        var bfrobj_type = await fileType.fromBuffer(bfrobj) || {ext: 'unknown'};
 
         if ( !this.valid_types[type].includes(bfrobj_type.ext) ) {
             bfrobj = null;

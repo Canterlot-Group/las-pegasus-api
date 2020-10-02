@@ -287,7 +287,7 @@ export default (seq, DataTypes) => class Models {
             type: {
                 type: DataTypes.STRING(32),
                 defaultValue: 'live',
-                validate: {isIn: [['live', 'podcast', 'tracklist']]}
+                validate: {isIn: [['live', 'podcast']]}
             }
         });
 
@@ -403,10 +403,6 @@ export default (seq, DataTypes) => class Models {
             timeframeEnd: { type: DataTypes.TIME },
             emissionDate: { type: DataTypes.DATE },
             finishDate: { type: DataTypes.DATE },
-            audioFile: {
-                type: DataTypes.STRING(255),
-                validate: {is: /^[a-zA-Z0-9]+\:\:[a-zA-Z0-9]{32}$/i}
-            },
             rarity: {
                 type: DataTypes.FLOAT(4, 3),
                 defaultValue: 0.1,

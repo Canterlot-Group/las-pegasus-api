@@ -10,7 +10,7 @@ export default (RouteInterface => {
         }
 
         // GET /bumper/relevant
-        getRelevant(req, res) {
+        /*getRelevant(req, res) {
             if (!this._hasRank({req, res}, 'member'))
                 return this._denyPermission({req, res});
 
@@ -24,7 +24,7 @@ export default (RouteInterface => {
                             OR ((TIME(NOW()) < timeframeEnd AND timeframeStart > timeframeEnd) OR (TIME(NOW()) > timeframeStart AND TIME(NOW()) < timeframeEnd))))
                 )`)
             }).then(bumper => res.json({ stat: 'OK', bumper: bumper }));
-        }
+        }*/
 
         // GET /bumper/:bumper_id
         getOne(req, res) {
@@ -54,6 +54,8 @@ export default (RouteInterface => {
                 return this._denyPermission({req, res});
 
             delete req.body.id;
+            if (!req.body.bumperEncoded)
+                return res.json({ stat: 'err', error: 'missing file' })
 
             this._models.Bumper.create(req.body).then(bumper => {
 
