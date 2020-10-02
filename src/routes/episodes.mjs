@@ -67,17 +67,17 @@ export default (RouteInterface => {
             if (!req.body.episodeEncoded)
                 return res.json({ stat: 'err', error: 'missing file' })
 
-            this._models.Episode.create(req.body).then(show => {
-                show.setUsers(participants).then(() => {
+            this._models.Episode.create(req.body).then(episode => {
+                episode.setUsers(participants).then(() => {
 
                     this._stor.save(`${song.id}`, 'episodes', req.body.episodeEncoded).then(save_result => {
 
                         if (save_result != 'ok') {
-                            song.destroy();
+                            show.destroy();
                             console.error(`Error while saving file: ${save_result}`);
                             res.json({ stat: 'err', error: save_result });
                         } else
-                            res.json({ stat: 'OK', song_id: show.id });
+                            res.json({ stat: 'OK', song_id: episode.id });
 
                     });
 
