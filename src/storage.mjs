@@ -78,4 +78,8 @@ export default class Storage {
         return Buffer.from(this.getRaw(filename, type)).toString('base64');
     }
 
+    delete(filename, type) {
+        return fs.unlinkSync(this.path + type + path.sep + filename);
+    }
+
 }
