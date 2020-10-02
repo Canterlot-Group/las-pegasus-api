@@ -111,7 +111,10 @@ export default (RouteInterface => {
 
             this._models.Episode.destroy({where: {
                 ShowId: req.params.show_id, episodeNumber: req.params.ep_number }})
-                .then(() => res.json({ stat: 'OK' }));
+                .then(() => { 
+                    this._stor.delete(req.params.ep_number, 'episodes');
+                    res.json({ stat: 'OK' });
+                });
         }
 
     }

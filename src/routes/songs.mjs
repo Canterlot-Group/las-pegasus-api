@@ -133,6 +133,7 @@ export default (RouteInterface => {
 
             var song_id = req.params.song_id;
             this._models.Song.destroy({where: { id: song_id }}).then(() => {
+                this._stor.delete(song_id, 'songs');
                 res.json({ stat: 'OK' });
             });
         }

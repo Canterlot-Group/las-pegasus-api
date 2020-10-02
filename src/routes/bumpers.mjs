@@ -77,6 +77,7 @@ export default (RouteInterface => {
                 return this._denyPermission({req, res});
 
             this._models.Bumper.destroy({where: { id: req.params.bumper_id }}).then(() => {
+                this._stor.delete(req.params.bumper_id, 'bumpers');
                 res.json({ stat: 'OK' });
             });
         }
