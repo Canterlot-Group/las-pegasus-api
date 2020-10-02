@@ -177,11 +177,6 @@ export default (seq, DataTypes) => class Models {
                 type: DataTypes.TEXT,
                 defaultValue: ''
             },
-            avatarFilename: {
-                type: DataTypes.STRING(255),
-                allowNull: true,
-                validate: {is: /^\w+\.(jpg|jpeg|png)$/i}
-            },
             bandcamp: {
                 type: DataTypes.STRING(1024),
                 allowNull: true,
@@ -209,11 +204,6 @@ export default (seq, DataTypes) => class Models {
             name: {
                 type: DataTypes.STRING(96),
                 allowNull: false
-            },
-            coverArtFilename: {
-                type: DataTypes.STRING(255),
-                allowNull: true,
-                validate: {is: /^\w+\.(jpg|jpeg|png)$/i}
             }
         });
 
@@ -231,11 +221,6 @@ export default (seq, DataTypes) => class Models {
             genre: {
                 type: DataTypes.STRING(64),
                 defaultValue: 'Unknown'
-            },
-            coverArtFilename: {
-                type: DataTypes.STRING(255),
-                allowNull: true,
-                validate: {is: /^\w+\.(jpg|jpeg|png)$/i}
             },
             lyrics: { // lines should be separated with \n
                 type: DataTypes.TEXT,
@@ -343,15 +328,6 @@ export default (seq, DataTypes) => class Models {
                 type: DataTypes.BOOLEAN,
                 defaultValue: true
             },
-            coverArtFilename: {
-                type: DataTypes.STRING(255),
-                allowNull: true,
-                validate: {is: /^\w+\.(jpg|jpeg|png)$/i}
-            },
-            epFilename: { // filename to the entire episode
-                type: DataTypes.STRING(255),
-                validate: {is: /^\w+\.(mp3|wav|flac|ogg|mp4|ogv)$/i}
-            },
             tracklist: { // if null regular episode, else json with song IDs and/or filenames to custom songs
                 type: DataTypes.JSON,
                 allowNull: true
@@ -446,6 +422,9 @@ export default (seq, DataTypes) => class Models {
         // --- -- --- -- --- -- --- -- ---
 
         this.ChatLog = seq.define('ChatLog', {
+            destination: {
+                type: DataTypes.STRING(120)
+            },
             content: {
                 type: DataTypes.STRING(280)
             }
