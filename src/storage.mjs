@@ -36,9 +36,13 @@ export default class Storage {
             console.error(`WARNING: "${storage_path}" has no read and/or write access!`.bold.red);
         }
 
-        for (var i = 0; i < this.valid_types.length; i++)
-            if (!fs.existsSync(storage_path + this.valid_types[i]))
-                fs.mkdirSync(storage_path + this.valid_types[i]);
+        var valid_types = Object.keys(this.valid_types);
+        for (var i = 0; i < valid_types.length; i++)
+            if (!fs.existsSync(storage_path + valid_types[i])) {
+                fs.mkdirSync(storage_path + valid_types[i]);
+                if (valid_types[i] == 'arts') // Generate empty file to make it easier to replace it with actual default cover art.
+                    fs.closeSync(fs.openSync(storage_path + valid_types[i] + path.sep + 'album-default', 'w'));
+            }
 
         this.path = storage_path;
     }
@@ -71,11 +75,16 @@ export default class Storage {
     }
 
     getRaw(filename, type) {
-        return fs.readFileSync(this.path + type + path.sep + filename);
+        try {
+            return fs.readFileSync(this.path + type + path.sep + filename);
+        } catch (err) {
+            return false;
+        }
     }
 
     get(filename, type) {
-        return Buffer.from(this.getRaw(filename, type)).toString('base64');
+        var f = this.getRaw(filename, type);
+        return f ? Buffer.from(f).toString('base64') : false;
     }
 
     delete(filename, type) {
