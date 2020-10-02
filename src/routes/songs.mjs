@@ -71,7 +71,10 @@ export default (RouteInterface => {
             if (!this._hasRank({req, res}, 'admin'))
                 return this._denyPermission({req, res});
 
-            req.body.id = null;
+            delete req.body.id;
+            if (!req.body.songEncoded)
+                return res.json({ stat: 'err', error: 'missing file' })
+
 
             this._models.Song.create(req.body).then(song => {
             
