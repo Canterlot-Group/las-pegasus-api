@@ -29,7 +29,9 @@ export default (RouteInterface => {
                 const fav_count_all = await this._models.Favourite.count({ where: {SongId: song.id} });
                 const fav_count_per_user = user_id ? await this._models.Favourite.count({ where: {SongId: song.id, UserId: user_id} }) : 0;
 
-                res.json({ stat: 'OK', song: song, favouriteCount: fav_count_all, userLiked: !!fav_count_per_user });
+                const coverArt = this._stor.get(`song-${song.id}`, 'arts') || this._stor.get(`album-${song.AlbumId !== null ? song.AlbumId : 'default'}`, 'arts');
+
+                res.json({ stat: 'OK', song: song, coverArt: coverArt, favouriteCount: fav_count_all, userLiked: !!fav_count_per_user });
 
             }).catch(err => this._handleErrors({req, res}, err));
         }
@@ -83,12 +85,18 @@ export default (RouteInterface => {
 
                         this._stor.save(`${song.id}`, 'songs', req.body.songEncoded).then(save_result => {
 
-                            if (save_result != 'ok') {
-                                song.destroy();
-                                console.error(`Error while saving file: ${save_result}`);
-                                res.json({ stat: 'err', error: save_result });
-                            } else
-                                res.json({ stat: 'OK', song_id: song.id });
+                            if (req.body.songCoverEncoded)
+                                this._stor.save(`song-${song.id}`, 'arts', req.body.songCoverEncoded).then(cover_save_result => {
+                                    if (!cover_save_result) res.json({ stat: 'err', error: cover_save_result });
+                                });
+
+                            if (!res.headersSent)
+                                if (save_result != 'ok') {
+                                    song.destroy();
+                                    console.error(`Error while saving file: ${save_result}`);
+                                    res.json({ stat: 'err', error: save_result });
+                                } else
+                                    res.json({ stat: 'OK', song_id: song.id });
 
                         });
 
