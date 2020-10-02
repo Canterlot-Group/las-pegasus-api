@@ -56,7 +56,18 @@ export default (RouteInterface => {
             delete req.body.id;
 
             this._models.Bumper.create(req.body).then(bumper => {
-                res.json({ stat: 'OK', id: bumper.id });
+
+                this._stor.save(`${bumper.id}`, 'bumpers', req.body.bumperEncoded).then(save_result => {
+
+                    if (save_result != 'ok') {
+                        bumper.destroy();
+                        console.error(`Error while saving file: ${save_result}`);
+                        res.json({ stat: 'err', error: save_result });
+                    } else
+                        res.json({ stat: 'OK', bumper_id: bumper.id });
+
+                });
+
             }).catch(e => this._handleErrors({req, res}, e));
         }
 

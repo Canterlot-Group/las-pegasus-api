@@ -70,14 +70,14 @@ export default (RouteInterface => {
             this._models.Episode.create(req.body).then(episode => {
                 episode.setUsers(participants).then(() => {
 
-                    this._stor.save(`${song.id}`, 'episodes', req.body.episodeEncoded).then(save_result => {
+                    this._stor.save(`${episode.id}`, 'episodes', req.body.episodeEncoded).then(save_result => {
 
                         if (save_result != 'ok') {
-                            show.destroy();
+                            episode.destroy();
                             console.error(`Error while saving file: ${save_result}`);
                             res.json({ stat: 'err', error: save_result });
                         } else
-                            res.json({ stat: 'OK', song_id: episode.id });
+                            res.json({ stat: 'OK', episode_id: episode.id });
 
                     });
 
