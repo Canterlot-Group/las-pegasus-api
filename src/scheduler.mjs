@@ -164,8 +164,8 @@ class Scheduler {
             return bumpers.reduce( (prev, curr) => (prev.rarity > curr.rarity) ? prev : curr ).id;
         }
 
-        const rarity_sum = bumpers.reduce( (accum, curr) => accum + curr.rarity, 0 );
-        const rand_pointer = Math.random() * rarity_sum;
+        let rarity_sum = bumpers.reduce( (accum, curr) => accum + curr.rarity, 0 );
+        let rand_pointer = Math.random() * rarity_sum;
 
         var accum = 0;
         for (var i = 0; i < bumpers.length; i++) {
