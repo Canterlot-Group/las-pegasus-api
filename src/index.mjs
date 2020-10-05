@@ -16,6 +16,8 @@ import middleware from './middleware.mjs';
 import 'colors';
 'use strict';
 
+console.info(`Booting API V2...`.green.bold)
+
 const storage = new Storage(config.file_storage_path);
 
 const seq = new sequelize(config.db.database, config.db.user, config.db.password, {
@@ -60,7 +62,7 @@ const streamScheduler = {};
 
 models.Stream.findAll({ attributes: ['id'] }).then(streams => {
     streams.forEach(st => {
-        streamScheduler[st] = new Scheduler(models, st.id, config.file_storage_path);
+        streamScheduler[st] = new Scheduler(models, st.id, config);
     });
 })
 

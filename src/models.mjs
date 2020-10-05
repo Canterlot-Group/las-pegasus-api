@@ -294,7 +294,7 @@ export default (seq, DataTypes) => class Models {
         this.Show.belongsToMany(this.User, { through: 'z_User_Shows' });
         this.User.belongsToMany(this.Show, { through: 'z_User_Shows' });
 
-        this.Show.belongsTo(this.Stream);
+        this.Show.belongsTo(this.Stream, { constraints: true });
         this.Stream.hasMany(this.Show);
 
         // --- -- --- -- --- -- --- -- ---

@@ -88,7 +88,13 @@ export default class Storage {
     }
 
     delete(filename, type) {
-        return fs.unlinkSync(this.path + type + path.sep + filename);
+        try {
+            return fs.unlinkSync(this.path + type + path.sep + filename);
+        } catch (e) {
+            console.error(`cannot delete "${this.path + type + path.sep + filename}"`);
+            console.error(e);
+            return null;
+        }
     }
 
 }

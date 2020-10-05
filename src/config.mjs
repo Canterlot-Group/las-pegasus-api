@@ -16,6 +16,7 @@ const config = {
     max_apikeys: 5,
     icecast_url: 'https://vinyl.laspegas.us:8080',
     file_storage_path: 'C:\\LPTest\\',
+    queue_size: [5, 10], // [min, max] - scheduler queue size
 
 }
 
