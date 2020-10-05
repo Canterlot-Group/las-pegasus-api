@@ -12,7 +12,15 @@ export default (RouteInterface => {
                 {include: [
                     { model: this._models.Stream },
                     { model: this._models.User, attributes: ['id', 'name'] }
-                ]}).then(playlist => res.json({ stat: 'OK', playlist: playlist }));
+                ]}).then(playlist => {
+
+                    var songs_arr = JSON.parse(playlist.songs);
+
+                    this._models.Song.findAll(this._paginate(req, { where: {id: {[this._ops.or]: songs_arr}}, order: this._seq.fn('field', this._seq.col('id'), ...songs_arr)} )).then(songs => {
+                        res.json({ stat: 'OK', playlist: playlist, songs: songs });
+                    });
+
+                });
         }
 
         // GET /playlists
