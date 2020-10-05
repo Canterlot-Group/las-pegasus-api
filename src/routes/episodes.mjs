@@ -109,12 +109,24 @@ export default (RouteInterface => {
             if (!this._hasRank({req, res}, 'admin'))
                 return this._denyPermission({req, res});
 
-            this._models.Episode.destroy({where: {
+            this._models.Episode.findOne({
+                where: {ShowId: req.params.show_id, episodeNumber: req.params.ep_number}
+            }).then(ep => {
+                
+                if (ep === null) return res.json({ stat: 'Err', error: 'episode not exist' });
+
+                this._models.Episode.destroy({ where: {id: ep.id} }).then(() => {
+                    this._stor.delete(ep.id, 'episodes');
+                    res.json({ stat: 'OK' });
+                });
+            });
+
+            /*this._models.Episode.destroy({where: {
                 ShowId: req.params.show_id, episodeNumber: req.params.ep_number }})
                 .then(() => { 
                     this._stor.delete(req.params.ep_number, 'episodes');
                     res.json({ stat: 'OK' });
-                });
+                });*/
         }
 
     }
