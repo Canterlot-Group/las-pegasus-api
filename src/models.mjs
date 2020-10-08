@@ -422,7 +422,8 @@ export default (seq, DataTypes) => class Models {
                 type: DataTypes.STRING(120)
             },
             content: {
-                type: DataTypes.STRING(280)
+                type: DataTypes.STRING(280),
+                allowNull: false
             }
         });
 

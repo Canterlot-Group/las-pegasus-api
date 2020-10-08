@@ -29,7 +29,7 @@ const seq = new sequelize(config.db.database, config.db.user, config.db.password
 const app = express();
 const server = http.createServer(app);
 
-seq.authenticate().then().catch(e => { console.error('Database unreachable;'.bold.red, e); process.exit(); });
+seq.authenticate().then().catch(e => { console.error('Database unreachable.'.bold.red, e); process.exit(); });
 const models = new (modelConstructor(seq, sequelize));
 
 middleware(app, config, models);
@@ -215,4 +215,10 @@ app.use(Router);
 app.use((req, res) => res.status(404).json({ stat: 'Err', err: 'route not found' }));
 
 server.listen(process.env.PORT || config.http_port || 8000);
+const WebSocket = new Socket(models, Session);
+
+server.on('upgrade', (req, sock, head) =>
+    WebSocket.wss.handleUpgrade(req, sock, head, sock =>
+        WebSocket.wss.emit('connection', sock, req)));
+
 export default app;

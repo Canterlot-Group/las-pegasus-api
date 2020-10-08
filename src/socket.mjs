@@ -1,55 +1,106 @@
-import io from 'socket.io';
+import WebSocket from 'ws';
+import escape from 'escape-html';
 'use strict';
 
 class Socket {
 
-    /*
-     *
-     *  I've set up some kind of WebSocket server that gets some data
-     *  with the type of "verify", then it responds with "no" with the type of "pop"
-     *  which client (socket.html) prints out in console.
-     * 
-     *  This file is responsible for both chat and instantly getting the song/stream
-     *  information, etc.
-     * 
-     *  verifyConnection should check if the Session provided through the socket channel
-     *  is valid, and if so then let the user send messages to chat.
-     * 
-     *  if user is unauthenticated it can only receive song information and what's going on
-     *  in chat.
-     * 
-     */ 
+    constructor(models, Session) {
 
-    constructor(app, models) {
-
-        this._io = io(app);
         this._models = models;
+        this.wss = new WebSocket.Server({ noServer: true });
+        this.users = [];
+        this.channels = [];
 
-        var that = this;
-        this._io.on('connection', sock => {
+        this.wss.on('connection', (sockconn, req) => {
 
-            console.log('o');
+            var user = {
+                conn: sockconn,
+                ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, // reverse proxy via Nginx/Apache
+                ip_direct: req.connection.remoteAddress, // ip of nginx/apache if reverse proxy is used, otherwise user
+                authenticated: false,
+                id: null, name: null,
+                session_id: null,
+                channels: ['#global'], // public channels
+                pm: [], // private messaging (array of objects with ids and names of users)
+                last_msg: (new Date()).getTime()
+            }
 
-            sock.verified = false;
-            sock.userId   = null;
+            this.users.push(user);
 
-            sock.on('verify', msg => this.verifyConnection(msg, sock));
+            sockconn.on('message', msg => {
+                let time_now = (new Date()).getTime();
+                if (user.last_msg + 600 >= time_now)
+                    return sockconn.send(JSON.stringify({ category: 'general', stat: 'Err', error: 'ratelimit reached' }));
+                else
+                    user.last_msg = time_now;
+
+                try {
+                    var message = JSON.parse(msg);
+                } catch (e) {
+                    return sockconn.send(JSON.stringify({ category: 'general', stat: 'Err', error: 'json not understood' }));
+                }
+
+                if (message.category == 'chat') {
+
+                    if (message.type == 'to-channel' && message.channel && message.contents)
+                        this.sendToChannel(user, message.channel.toString().toLowerCase(), escape(message.contents));
+
+                }
+            });
+
         });
 
     }
 
-    verifyConnection(msg, sock) {
-
-        var [sessionId, userId] = msg.split(':');
-        if ([sessionId, userId].includes(undefined)) {
-            console.dir(msg);
-            sock.emit('pop', 'no');
-            sock.disconnect();
-        }
-
+    async archive(author, channel, contents) {
+        this._models.ChatLog.create({destination: `${channel}`, content: `${contents}`, UserId: author.id}).then()
+            .catch(e => console.error(`Cannot archive message by "${author.name}":\r\n${contents}`.red.bold));
     }
 
+    // need to be tested
+    authenticate(user, Session, req) {
+        var res = Session.validate(req, null, { user_id: user.id, session_id: user.session_id });
+        if (res.stat == 'OK')
+            return res.valid;
+        else
+            return false;
+    }
 
+    leaveChannel(user, channel_name) {
+        var channel = this.channels[this.channels.find(ch => ch.name = channel_name)];
+        if (channel === undefined)
+            return {error: 'channel not registered'};
+
+        this.channels.splice(this.channels.indexOf({ id: user.id, session: user.session_id }), -1);
+        return true;
+    }
+
+    joinChannel(user, channel_name) {
+        if (user.authenticated) {
+            var channel = this.channels[this.channels.find(ch => ch.name = channel_name)];
+            if (channel === undefined)
+                return {error: 'channel not registered'};
+
+            if (channel.clients.includes({ id: user.id, session: user.session_id }))
+                return {error: 'client already active'};
+
+            channel.clients.push({ id: user.id, session: user.session_id });
+            return true;
+        } else {
+            return {error: 'client not authenticated'};
+        }
+    }
+
+    sendToChannel(author, channel, contents) {
+        this.users.filter( (curr) => curr.channels.includes(channel) )
+            .forEach(user => user.conn.send(JSON.stringify(
+                {category: 'chat', type: 'message', channel: channel, author: { id: author.id, name: author.name }, contents: contents })));
+        this.archive(author, channel, contents);
+    }
+
+    broadcastToClients(contents) {
+        this.users.forEach(user => user.conn.send(JSON.stringify({ cat: 'chat', type: 'broadcast', contents: contents })));
+    }
 
 }
 
