@@ -33,7 +33,8 @@ export default (RouteInterface => {
             var user_id = req.params.user_id;
             var session_id = req.params.session_id;
             var user_agent = req.header('User-Agent') || 'unknown';
-            var ip_address = req.connection.remoteAddress;
+            var ip_address = req.header('x-forwarded-for') || req.connection.remoteAddress;
+            //var ip_address = req.connection.remoteAddress; // use this instead if you must use express without reverse proxy although not recommended
 
             this._models.Session.findOne({where: {
                 userId: user_id, sessionId: session_id,

@@ -80,7 +80,8 @@ export default (RouteInterface => {
                     await bcrypt.compare(password, user.password, (err, matched) => {
                         if (matched) {
 
-                            var ip_address = req.connection.remoteAddress;
+                            var ip_address = req.header('x-forwarded-for') || req.connection.remoteAddress;
+                            //var ip_address = req.connection.remoteAddress; // use this instead if you must use express without reverse proxy although not recommended
                             var user_agent = req.header('User-Agent') || 'unknown';
                             if (create_session) {
                                 this._models.Session.create({ sessionId: this._createSessionId(user.name),
