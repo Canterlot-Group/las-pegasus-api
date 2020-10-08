@@ -43,16 +43,12 @@ export default (RouteInterface => {
                 if (session) {
                     session.changed('updatedAt', true);
                     session.save();
-                    if (!local)
-                        res.json({ stat: 'OK', valid: true });
-                    else
-                        return { stat: 'OK', valid: true };
-                } else {
-                    if (!local)
-                        res.json({ stat: 'OK', valid: false });
-                    else
-                        return { stat: 'OK', valid: false };
                 }
+                
+                if (!local)
+                    res.json({ stat: 'OK', valid: !!session });
+                else
+                    return { stat: 'OK', valid: !!session };
             });
         }
 
