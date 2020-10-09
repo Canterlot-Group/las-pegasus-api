@@ -33,7 +33,8 @@ export default class Storage {
         try {
             fs.accessSync(storage_path, fs.W_OK | fs.R_OK);
         } catch(e) {
-            console.error(`WARNING: "${storage_path}" has no read and/or write access!`.bold.red);
+            console.error(`ERROR: "${storage_path}" has no read and/or write access!`.bold.red);
+            process.exit();
         }
 
         var valid_types = Object.keys(this.valid_types);
