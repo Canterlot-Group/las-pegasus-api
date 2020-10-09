@@ -26,12 +26,12 @@ export default (RouteInterface => {
         }
 
         // POST /user/:user_id/session/:session_id/validate
-        validate(req, res, local = false) {
+        validate(req, res) {
             if (!this._hasRank({req, res}, 'admin', true))
                 return this._denyPermission({req, res});
 
-            var user_id = local ? local.user_id : req.params.user_id;
-            var session_id = local ? local.session_id : req.params.session_id;
+            var user_id = req.params.user_id;
+            var session_id = req.params.session_id;
             var user_agent = req.header('User-Agent') || 'unknown';
             var ip_address = req.header('x-forwarded-for') || req.connection.remoteAddress;
             //var ip_address = req.connection.remoteAddress; // use this instead if you must use express without reverse proxy although not recommended
@@ -44,11 +44,7 @@ export default (RouteInterface => {
                     session.changed('updatedAt', true);
                     session.save();
                 }
-                
-                if (!local)
-                    res.json({ stat: 'OK', valid: !!session });
-                else
-                    return { stat: 'OK', valid: !!session };
+                res.json({ stat: 'OK', valid: !!session });
             });
         }
 

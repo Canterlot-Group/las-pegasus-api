@@ -4,7 +4,7 @@ import escape from 'escape-html';
 
 class Socket {
 
-    constructor(models, Session) {
+    constructor(models) {
 
         this._models = models;
         this.wss = new WebSocket.Server({ noServer: true });
@@ -45,6 +45,33 @@ class Socket {
                     if (message.type == 'to-channel' && message.channel && message.contents)
                         this.sendToChannel(user, message.channel.toString().toLowerCase(), escape(message.contents));
 
+                    else if (message.type == 'join-channel' && message.channel) {
+                        let res = this.joinChannel(user, message.channel);
+                        if (res) {
+                            sockconn.send(JSON.stringify({ category: 'join-channel', channel: message.channel, stat: 'OK' }));
+                            this.sendToChannel({id: null, name: 'Notification'}, message.channel, `+ ${user.name}`);
+                        }
+                    }
+
+                }
+
+                else if (message.category == 'general') {
+
+                    if (message.type = 'authenticate' && message.apiSession) {
+                        this.authenticate(message.apiSession, user).then(response => {
+                            if (response.ok) {
+                                user.name = response.user_name;
+                                user.id   = response.user_id;
+                                user.session_id = message.apiSession;
+                                user.authenticated = true;
+                                var to_res = {category: 'general', type: 'authentication', stat: 'OK'};
+                            } else {
+                                var to_res = {category: 'general', type: 'authentication', stat: 'Err', reason: response.reason};
+                            }
+                            sockconn.send(JSON.stringify(to_res));
+                        })
+                    }
+
                 }
             });
 
@@ -57,13 +84,18 @@ class Socket {
             .catch(e => console.error(`Cannot archive message by "${author.name}":\r\n${contents}`.red.bold));
     }
 
-    // need to be tested
-    authenticate(user, Session, req) {
-        var res = Session.validate(req, null, { user_id: user.id, session_id: user.session_id });
-        if (res.stat == 'OK')
-            return res.valid;
-        else
-            return false;
+    async authenticate(session_id, user) {
+
+        if (user.authenticated)
+            return {ok: false, reason: 'already authenticated'};
+
+        let ses = await this._models.Session.findOne(
+            { where: { sessionId: session_id, ipAddress: user.ip },
+            include: { model: this._models.User, attributes: ['name'] } });
+        if (!ses) return {ok: false, reason: 'denied'};
+
+        return {ok: true, user_name: ses.User.name, user_id: ses.User.id};
+        
     }
 
     leaveChannel(user, channel_name) {

@@ -215,7 +215,7 @@ app.use(Router);
 app.use((req, res) => res.status(404).json({ stat: 'Err', err: 'route not found' }));
 
 server.listen(process.env.PORT || config.http_port || 8000);
-const WebSocket = new Socket(models, Session);
+const WebSocket = new Socket(models);
 
 server.on('upgrade', (req, sock, head) =>
     WebSocket.wss.handleUpgrade(req, sock, head, sock =>
