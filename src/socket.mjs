@@ -1,137 +1,186 @@
 import WebSocket from 'ws';
 import escape from 'escape-html';
+import { v4 as uuidv4 } from 'uuid';
 'use strict';
 
 class Socket {
 
-    constructor(models) {
+    constructor(models, streams) {
 
         this._models = models;
         this.wss = new WebSocket.Server({ noServer: true });
-        this.users = [];
-        this.channels = [];
+        this.active_clients = {};
+        this.channels = {};
 
-        this.wss.on('connection', (sockconn, req) => {
+        for (let i = 0; i < streams.length; i++)
+            if (!streams[i].is_mirror)
+                this.channels[streams[i].name] = {'stream_id': streams[i].id, 'clients': {}};
 
-            var user = {
-                conn: sockconn,
-                ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress, // reverse proxy via Nginx/Apache
-                ip_direct: req.connection.remoteAddress, // ip of nginx/apache if reverse proxy is used, otherwise user
-                authenticated: false,
-                id: null, name: null,
-                session_id: null,
-                channels: ['#global'], // public channels
-                pm: [], // private messaging (array of objects with ids and names of users)
-                last_msg: (new Date()).getTime()
+        this.wss.on('connection', (...args) => this.handleConnection(...args));
+        console.log(`Chat initialized with channels: ${Object.keys(this.channels).join(", ")}`.green.bold);
+
+    }
+
+    _sendTo(client_id, message) {
+        this.active_clients[client_id].connection.send(JSON.stringify(message));
+    }
+
+    _clientsOf(channel) {
+        return Object.keys(this.channels[channel].clients);
+    }
+
+    async _saveToLog(client_id, channel, content) {
+        var user = this.active_clients[client_id].user;
+        this._models.ChatLog.create({destination: channel, content: escape(content), UserId: user.id}).then()
+            .catch(e => console.error(`Cannot archive message by "${user.name}":\r\n${contents}`.red.bold));
+    }
+
+    handleConnection(sockconn, req) {
+
+        var client_id = uuidv4();
+        var incoming_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        sockconn.send(JSON.stringify({ stat: 'OK', client_id: client_id }));
+
+        this.active_clients[client_id] = {
+            ip: incoming_ip,
+            connection: sockconn,
+            user: {authenticated: false,
+                name: null, id: null, session: null},
+            channel: null, pms: [],
+            last_message: (new Date()).getTime()
+        }
+
+        sockconn.on('message', message => this.commandHandler(message, client_id));
+
+    }
+
+    commandHandler(message, client_id) {
+
+        try { var msgobj = JSON.parse(message); }
+        catch (e) { return this._sendTo(client_id, {stat: 'Err', error: 'json not parseable'}); }
+        
+        let time_now = (new Date()).getTime();
+        let last_call = this.active_clients[client_id].last_message;
+        this.active_clients[client_id].last_message = time_now;
+
+        if (last_call + 750 >= time_now)
+            return this._sendTo(client_id, {stat: 'Err', error: 'too fast (ratelimit)'});
+
+
+        switch (msgobj.type) {
+           
+            case 'auth':
+                let session = msgobj.session;
+                if (!session) return this._sendTo(client_id, {stat: 'Err', error: 'session missing'});
+                return this.auth(client_id, msgobj.session,
+                    res => res ? null : this._sendTo(client_id, {stat: 'Err', error: 'session invalid'}))
+
+            case 'switch-channel':
+                let channel = msgobj.channel;
+                if (!channel) return this._sendTo(client_id, {stat: 'Err', error: 'channel missing'});
+                return this.useChannel(client_id, channel,
+                    res => res ? null : this._sendTo(client_id, {stat: 'Err', error: 'channel not exist'}));
+
+            case 'send-message-to-channel':
+                if (!msgobj.content) return this._sendTo(client_id, {stat: 'Err', error: 'content missing'});
+                return this.messageToActiveChannel(client_id, msgobj.content,
+                    res => res ? null : this._sendTo(client_id, {stat: 'Err', error: 'cannot send message'}));
+
+            case 'send-message-to-client':
+                if (!msgobj.content || !msgobj.destination_id) return this._sendTo(client_id, {stat: 'Err', error: 'content or destination missing'});
+                return this.messageToClient(client_id, msgobj.destination_id, msgobj.content,
+                    res => res ? null : this._sendTo(client_id, {stat: 'Err', error: 'cannot send message'}));
+
+            default:
+                this._sendTo(client_id, {stat: 'Err', error: 'unknown request'});
+
+        }
+
+    }
+
+
+    async auth(client_id, session_id, callback) {
+
+        var is_authenticated = this.active_clients[client_id].user.authenticated;
+        var ip_address = this.active_clients[client_id].ip;
+
+        if (!is_authenticated) {
+            let session = await this._models.Session.findOne({
+                where: {sessionId: session_id, ipAddress: ip_address },
+                include: {model: this._models.User, attributes: ['name']}});
+
+            if (!session)
+                callback(false);
+
+            let user_id = session.UserId;
+            let user_name = session.User.name;
+
+            this.active_clients[client_id].user = {
+                authenticated: true, id: user_id,
+                name: user_name, session: session_id
             }
 
-            this.users.push(user);
+            return callback(true);
+        }
+        else return callback(true);
 
-            sockconn.on('message', msg => {
-                let time_now = (new Date()).getTime();
-                if (user.last_msg + 600 >= time_now)
-                    return sockconn.send(JSON.stringify({ category: 'general', stat: 'Err', error: 'ratelimit reached' }));
-                else
-                    user.last_msg = time_now;
+    }
 
-                try {
-                    var message = JSON.parse(msg);
-                } catch (e) {
-                    return sockconn.send(JSON.stringify({ category: 'general', stat: 'Err', error: 'json not understood' }));
-                }
+    async useChannel(client_id, channel, callback) {
 
-                if (message.category == 'chat') {
+        if (this.channels[channel] === undefined) return callback(false);
 
-                    if (message.type == 'to-channel' && message.channel && message.contents)
-                        this.sendToChannel(user, message.channel.toString().toLowerCase(), escape(message.contents));
+        let prev_channel = this.active_clients[client_id].channel;
+        if (prev_channel !== null)
+            delete this.channels[prev_channel].clients[client_id];
 
-                    else if (message.type == 'join-channel' && message.channel) {
-                        let res = this.joinChannel(user, message.channel);
-                        if (res) {
-                            sockconn.send(JSON.stringify({ category: 'join-channel', channel: message.channel, stat: 'OK' }));
-                            this.sendToChannel({id: null, name: 'Notification'}, message.channel, `+ ${user.name}`);
-                        }
-                    }
+        this.channels[channel].clients[client_id] = {
+            name: this.active_clients[client_id].user.name, canSpeak: this.active_clients[client_id].user.authenticated};
 
-                }
+        this.active_clients[client_id].channel = channel;
 
-                else if (message.category == 'general') {
+        this._clientsOf(channel).forEach(c => {
+            this._sendTo(c, {dataUpdate: {
+                activeChannel: this.active_clients[client_id].channel,
+                activeChannelClients: this.channels[channel].clients}});
+        });
 
-                    if (message.type = 'authenticate' && message.apiSession) {
-                        this.authenticate(message.apiSession, user).then(response => {
-                            if (response.ok) {
-                                user.name = response.user_name;
-                                user.id   = response.user_id;
-                                user.session_id = message.apiSession;
-                                user.authenticated = true;
-                                var to_res = {category: 'general', type: 'authentication', stat: 'OK'};
-                            } else {
-                                var to_res = {category: 'general', type: 'authentication', stat: 'Err', reason: response.reason};
-                            }
-                            sockconn.send(JSON.stringify(to_res));
-                        })
-                    }
+        callback(true);
 
-                }
-            });
+    }
+
+    async messageToActiveChannel(client_id, content, callback) {
+
+        if (!this.active_clients[client_id].user.authenticated ||
+            this.active_clients[client_id].channel === null) return callback(false);
+
+        this._clientsOf(this.active_clients[client_id].channel).forEach(c => {
+
+            this._sendTo(c, {newMessage: {activeChannel: this.active_clients[client_id].channel,
+                author: client_id, content: escape(content)}});
+
+            this._saveToLog(client_id, this.active_clients[client_id].channel, content);
 
         });
 
+        callback(true);
+
     }
 
-    async archive(author, channel, contents) {
-        this._models.ChatLog.create({destination: `${channel}`, content: `${contents}`, UserId: author.id}).then()
-            .catch(e => console.error(`Cannot archive message by "${author.name}":\r\n${contents}`.red.bold));
-    }
+    async messageToClient(client_id, destination_id, content, callback) {
 
-    async authenticate(session_id, user) {
+        if (!this.active_clients[client_id].user.authenticated ||
+            this.active_clients[destination_id].user === undefined ||
+            !this.active_clients[destination_id].user.authenticated)
+            return callback(false);
 
-        if (user.authenticated)
-            return {ok: false, reason: 'already authenticated'};
+        let client_name = this.active_clients[client_id].user.name;
 
-        let ses = await this._models.Session.findOne(
-            { where: { sessionId: session_id, ipAddress: user.ip },
-            include: { model: this._models.User, attributes: ['name'] } });
-        if (!ses) return {ok: false, reason: 'denied'};
+        this._sendTo(destination_id, {
+            newPrivateMessage: {from: {id: client_id, name: client_name}, content: escape(content)}});
 
-        return {ok: true, user_name: ses.User.name, user_id: ses.User.id};
-        
-    }
+        callback(true);
 
-    leaveChannel(user, channel_name) {
-        var channel = this.channels[this.channels.find(ch => ch.name = channel_name)];
-        if (channel === undefined)
-            return {error: 'channel not registered'};
-
-        this.channels.splice(this.channels.indexOf({ id: user.id, session: user.session_id }), -1);
-        return true;
-    }
-
-    joinChannel(user, channel_name) {
-        if (user.authenticated) {
-            var channel = this.channels[this.channels.find(ch => ch.name = channel_name)];
-            if (channel === undefined)
-                return {error: 'channel not registered'};
-
-            if (channel.clients.includes({ id: user.id, session: user.session_id }))
-                return {error: 'client already active'};
-
-            channel.clients.push({ id: user.id, session: user.session_id });
-            return true;
-        } else {
-            return {error: 'client not authenticated'};
-        }
-    }
-
-    sendToChannel(author, channel, contents) {
-        this.users.filter( (curr) => curr.channels.includes(channel) )
-            .forEach(user => user.conn.send(JSON.stringify(
-                {category: 'chat', type: 'message', channel: channel, author: { id: author.id, name: author.name }, contents: contents })));
-        this.archive(author, channel, contents);
-    }
-
-    broadcastToClients(contents) {
-        this.users.forEach(user => user.conn.send(JSON.stringify({ cat: 'chat', type: 'broadcast', contents: contents })));
     }
 
 }
