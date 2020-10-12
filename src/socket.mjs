@@ -5,10 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 class Socket {
 
-    constructor(models, streams) {
+    constructor(models, streams, ws_port) {
 
         this._models = models;
-        this.wss = new WebSocket.Server({ noServer: true });
+        this.wss = new WebSocket.Server({ port: ws_port });
         this.active_clients = {};
         this.channels = {};
 
@@ -67,7 +67,7 @@ class Socket {
             return this._sendTo(client_id, {stat: 'Err', error: 'too fast (ratelimit)'});
 
 
-        switch (msgobj.type) {
+        switch (`${msgobj.type}`.toLowerCase()) {
            
             case 'auth':
                 let session = msgobj.session;
@@ -90,6 +90,9 @@ class Socket {
                 if (!msgobj.content || !msgobj.destination_id) return this._sendTo(client_id, {stat: 'Err', error: 'content or destination missing'});
                 return this.messageToClient(client_id, msgobj.destination_id, msgobj.content,
                     res => res ? null : this._sendTo(client_id, {stat: 'Err', error: 'cannot send message'}));
+
+            case 'ping':
+                return this._sendTo(client_id, {'stat': 'Pong'});
 
             default:
                 this._sendTo(client_id, {stat: 'Err', error: 'unknown request'});
