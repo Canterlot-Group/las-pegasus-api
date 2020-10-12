@@ -10,6 +10,7 @@ class Socket {
         this._models = models;
         this.wss = new WebSocket.Server({ port: ws_port });
         this.active_clients = {};
+        this.active_ips = [];
         this.channels = {};
 
         for (let i = 0; i < streams.length; i++)
@@ -39,7 +40,13 @@ class Socket {
 
         var client_id = uuidv4();
         var incoming_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        var ip_limit = 6;
+
+        if ( this.active_ips.filter(ip => ip === incoming_ip).length > ip_limit )
+            return sockconn.send(JSON.stringify({ stat: 'Err', error: `Max active sessions on IP reached (${ip_limit}).` }));
+
         sockconn.send(JSON.stringify({ stat: 'OK', client_id: client_id }));
+        this.active_ips.push(incoming_ip);
 
         this.active_clients[client_id] = {
             ip: incoming_ip,
