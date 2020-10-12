@@ -18,7 +18,7 @@ class Socket {
                 this.channels[streams[i].name] = {'stream_id': streams[i].id, 'clients': {}};
 
         this.wss.on('connection', (...args) => this.handleConnection(...args));
-        console.log(`Chat initialized with channels: ${Object.keys(this.channels).join(", ")}`.green.bold);
+        console.info(`Chat on. Channels: ${Object.keys(this.channels).join(", ")}`.green.bold);
 
     }
 
@@ -58,6 +58,12 @@ class Socket {
         }
 
         sockconn.on('message', message => this.commandHandler(message, client_id));
+
+        var clientDisconnected = setInterval( () => 
+            this.active_clients[client_id].last_message + 25000 > (new Date()).getTime() ? null
+            : this.disconnectHandler(incoming_ip, client_id, clientDisconnected), 20000 ); 
+        
+        //sockconn.on('disconnect', () => this.disconnectHandler(incoming_ip, client_id));
 
     }
 
@@ -105,6 +111,20 @@ class Socket {
                 this._sendTo(client_id, {stat: 'Err', error: 'unknown request'});
 
         }
+
+    }
+
+    disconnectHandler(ip, client_id, interval) {
+
+        this.active_ips = this.active_ips.filter(i => i !== ip);
+
+        var client = this.active_clients[client_id];
+        if (client.channel)
+            delete this.channels[client.channel].clients[client_id];
+
+        this.active_clients[client_id].connection.close();
+        delete this.active_clients[client_id];
+        clearInterval(interval);
 
     }
 
