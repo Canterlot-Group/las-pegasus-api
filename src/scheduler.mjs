@@ -30,8 +30,18 @@ class Scheduler {
 
     }
 
+    getRelevantPlaylists() {
+
+        return this._models.Playlist.findAll({ where: {StreamId: this._id, [sequelize.Op.or]: [
+                sequelize.literal(`isnull(finishDate) and emissionDate > now() and emissionDate < date_add(now(), interval 10 minute)`),
+                sequelize.literal(`emissionDate < now() and finishdate > now()`)
+        ]}});
+
+    }
 
     async updateQueue(that) {
+
+        var playlists = await this.getRelevantPlaylists();
 
         var [min, max] = this._config.queue_size;
         if ( this.queue.length < min ) {
@@ -88,25 +98,26 @@ class Scheduler {
                     console.log(sifted_songs);
                 }
 
-            } else { // no episodes
+            } else if (this.songs_since_bumper >= 5) { // no episodes
 
-                if ( that.songs_since_bumper >= 5 ) {
+                var should_play = Math.random() * (12 - that.songs_since_bumper) + that.songs_since_bumper;
+                if ( should_play == 12 || that.songs_since_bumper >= 10 ) {
 
-                    var should_play = Math.random() * (12 - that.songs_since_bumper) + that.songs_since_bumper;
-                    if ( should_play == 12 || that.songs_since_bumper >= 10 ) {
+                    var bumper_to_play = await that.chooseBumper();
 
-                        var bumper_to_play = await that.chooseBumper();
+                    if (bumper_to_play !== null)
+                        console.log(`playing bumper: ${bumper_to_play}`);
 
-                        if (bumper_to_play !== null)
-                            console.log(`playing bumper: ${bumper_to_play}`);
-
-                        that.songs_since_bumper = -1;
-
-                    }
+                    that.songs_since_bumper = -1;
 
                 }
 
                 that.songs_since_bumper++;
+
+            } else if (playlists.length !== 0) {
+
+                // TODO: check the priority before adding to queue
+                console.log(playlists);
 
             }
 
