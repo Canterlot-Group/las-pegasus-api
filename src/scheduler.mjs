@@ -12,13 +12,12 @@ class Scheduler {
         this.queue   = [];
         this.current_episodes = [];
         this.songs_since_bumper = 0;
+        this.active_playlists_songs = {};
 
-        this.regularShuffle();
-        this.chooseBumper();
-
-        setTimeout( async () => this.current_episodes = await this.checkForShow(this._models.Episode, this._models.Show, this._id), 100);
-        setInterval(async () => this.current_episodes = await this.checkForShow(this._models.Episode, this._models.Show, this._id), 120000);
-        setInterval(() => this.updateQueue(this), 2000);
+        //setTimeout( async () => this.current_episodes = await this.checkForShow(this._models.Episode, this._models.Show, this._id), 100);
+        //setInterval(async () => this.current_episodes = await this.checkForShow(this._models.Episode, this._models.Show, this._id), 120000);
+        setTimeout(() => this.updateQueue(), 100);
+        setInterval(() => this.updateQueue(), 1000);
 
     }
 
@@ -30,6 +29,7 @@ class Scheduler {
 
     }
 
+    // no need for "async" since it returns Promise anyway
     getRelevantPlaylists() {
 
         return this._models.Playlist.findAll({ where: {StreamId: this._id, [sequelize.Op.or]: [
@@ -39,9 +39,12 @@ class Scheduler {
 
     }
 
-    async updateQueue(that) {
+    async updateQueue() {
 
         var playlists = await this.getRelevantPlaylists();
+        playlists = playlists.concat(
+            await this._models.Playlist.findAll({where: {id: Object.keys(this.active_playlists_songs)}}));
+        playlists = playlists.filter((playlist, index, a) => a.findIndex(t => (t.id === t.id)) === index);
 
         var [min, max] = this._config.queue_size;
         if ( this.queue.length < min ) {
@@ -100,28 +103,96 @@ class Scheduler {
 
             } else if (this.songs_since_bumper >= 5) { // no episodes
 
-                var should_play = Math.random() * (12 - that.songs_since_bumper) + that.songs_since_bumper;
-                if ( should_play == 12 || that.songs_since_bumper >= 10 ) {
+                let should_play = Math.ceil(Math.random() * (12 - this.songs_since_bumper) + this.songs_since_bumper);
+                if ( should_play == 12 || this.songs_since_bumper >= 10 ) {
 
-                    var bumper_to_play = await that.chooseBumper();
+                    var bumper_to_play = await this.chooseBumper();
 
                     if (bumper_to_play !== null)
                         console.log(`playing bumper: ${bumper_to_play}`);
 
-                    that.songs_since_bumper = -1;
+                    this.songs_since_bumper = -1;
 
                 }
 
-                that.songs_since_bumper++;
-
             } else if (playlists.length !== 0) {
 
-                // TODO: check the priority before adding to queue
-                console.log(playlists);
+                var active_playlist = [];
+                var time_now = (new Date()).getTime();
+
+                for (let playlist of playlists) {
+                    // TODO: add time predicting later
+                    if (playlist.emissionDate < time_now && (playlist.finishDate === null || playlist.finishDate > time_now))
+                        active_playlist.push(playlist);
+                }
+
+                // if there are multiple playlist with highest priority, use one with lower ID (older, default MySQL behaviour)
+                if (active_playlist.length !== 0)
+                    var chosen_playlist = active_playlist.reduce((max, playlist) => playlist.priority > max.priority ? playlist : max);
+                else
+                    return; // TODO: Recurse to find something to play.
+
+                var songs_ids = JSON.parse(chosen_playlist.songs);
+                if (chosen_playlist.allowQueue)
+                    console.log(`${chosen_playlist.name} allowed queueing.`); // TODO: add handler for user-defined queues
+
+                if (songs_ids.length === 0) {
+                    console.log(`${chosen_playlist.name} empty. Deploying default shuffle.`);
+                    return;
+                }
+
+                if (!Object.keys(this.active_playlists_songs).includes(chosen_playlist.id))
+                    this.active_playlists_songs[chosen_playlist.id] = songs_ids;
+
+                var chosen_song;
+                switch (chosen_playlist.sort) {
+
+                    case 'ordered':
+                        if (this.active_playlists_songs[chosen_playlist.id].length === 0)
+                            delete this.active_playlists_songs[chosen_playlist.id];
+                            // TODO: Recurse update queue to find something to play.
+                        else
+                            chosen_song = this.active_playlists_songs[chosen_playlist.id].shift();
+                            console.log(`Playing ${chosen_song} for playlist ${chosen_playlist.name} (ordered)`);
+                        break;
+
+                    case 'randomByHours':
+                        if (chosen_playlist.finishDate < time_now)
+                            delete this.active_playlists_songs[chosen_playlist.id];
+                            // TODO: Recurse update queue to find something to play.
+                        else {
+                            let random_index = Math.floor(Math.random() * this.active_playlists_songs[chosen_playlist.id].length);
+                            chosen_song = this.active_playlists_songs[chosen_playlist.id][random_index];
+                            console.log(`Playing ${chosen_song} for playlist ${chosen_playlist.name} (randomByHours)`);
+                        }
+                        break;
+
+                    case 'shuffle':
+                        if (this.active_playlists_songs[chosen_playlist.id].length === 0)
+                            delete this.active_playlists_songs[chosen_playlist.id];
+                            // TODO: Recurse update queue to find something to play.
+                        else {
+                            let random_index = Math.floor(Math.random() * this.active_playlists_songs[chosen_playlist.id].length);
+                            chosen_song = this.active_playlists_songs[chosen_playlist.id].splice(random_index, 1);
+                            console.log(`Playing ${chosen_song} for playlist ${chosen_playlist.name} (shuffle)`);
+                        }
+                        break;
+
+                    default:
+                        console.log(`${chosen_playlist.name} has invalid sort type. Deploying default shuffle.`);
+
+                }
+
+            } else {
+
+                // TODO: Play some song
+                console.log(`Playing random song in stream ${this._id}`);
 
             }
 
         }
+
+        this.songs_since_bumper++;
 
     }
 
