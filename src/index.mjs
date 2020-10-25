@@ -6,7 +6,6 @@ import config from './config.mjs';
 import routes from './routes.mjs';
 import modelConstructor from './models.mjs';
 
-import Icecast   from './icecast.mjs';
 import Scheduler from './scheduler.mjs';
 import Socket    from './socket.mjs';
 import Storage   from './storage.mjs';
