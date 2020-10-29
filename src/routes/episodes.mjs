@@ -1,4 +1,5 @@
 'use strict';
+import { v4 as uuidv4 } from 'uuid';
 
 export default (RouteInterface => {
 
@@ -64,13 +65,32 @@ export default (RouteInterface => {
             var participants = req.body.users || [];
 
             delete req.body.id;
-            if (!req.body.episodeEncoded)
-                return res.json({ stat: 'err', error: 'missing file' })
+            if (!req.body.episodeEncoded && !req.body.tracklist)
+                return res.json({ stat: 'err', error: 'missing file or tracklist' })
+
+            if (req.body.tracklist) {
+
+                req.body.episodeEncoded = null;
+                for (var i = 0; i < req.body.tracklist.length; i++) {
+                    console.log(Object.keys(req.body.tracklist[i]));
+                    let object_schema = {type: '', title: '', art: '', base64: ''};
+                    Object.keys(req.body.tracklist[i]).every(
+                        k => { if (!(k in object_schema)) res.json({ stat: 'err', error: 'tracklist incorrect' }) });
+
+                    if (req.body.tracklist[i].type == 'custom')
+                        req.body.tracklist[i].filename = uuidv4();
+                    else
+                        return res.json({ stat: 'err', error: 'tracklist incorrect' });
+
+                }
+                var tracklist_w_b64 = req.body.tracklist;
+                req.body.tracklist = req.body.tracklist.map(({ base64, ...keepAttrs }) => keepAttrs);
+            }
 
             this._models.Episode.create(req.body).then(episode => {
                 episode.setUsers(participants).then(() => {
 
-                    this._stor.save(`${episode.id}`, 'episodes', req.body.episodeEncoded).then(save_result => {
+                    this._stor.save(`${episode.id}`, 'episodes', tracklist_w_b64 || req.body.episodeEncoded).then(save_result => {
 
                         if (save_result != 'ok') {
                             episode.destroy();
@@ -121,12 +141,6 @@ export default (RouteInterface => {
                 });
             });
 
-            /*this._models.Episode.destroy({where: {
-                ShowId: req.params.show_id, episodeNumber: req.params.ep_number }})
-                .then(() => { 
-                    this._stor.delete(req.params.ep_number, 'episodes');
-                    res.json({ stat: 'OK' });
-                });*/
         }
 
     }
